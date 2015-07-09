@@ -6,7 +6,7 @@ end
 nomatch(pat, ex) = throw(MatchError(pat, ex))
 
 isbinding(s) = false
-isbinding(s::Symbol) = Base.ismatch(r"[^_]_$", string(s))
+isbinding(s::Symbol) = Base.ismatch(r"[^_]_(_str)?$", string(s))
 
 function bname(s::Symbol)
   symbol(Base.match(r"^@?(\w*?)_+", string(s)).captures[1])
