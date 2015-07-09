@@ -9,7 +9,7 @@ isbinding(s) = false
 isbinding(s::Symbol) = Base.ismatch(r"[^_]_$", string(s))
 
 function bname(s::Symbol)
-  symbol(Base.match(r"^(\w*?)_+", string(s)).captures[1])
+  symbol(Base.match(r"^@?(\w*?)_+", string(s)).captures[1])
 end
 
 function match_inner(pat, ex, env)
