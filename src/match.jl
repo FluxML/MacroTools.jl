@@ -17,6 +17,9 @@ function match_inner(pat, ex, env)
   return env
 end
 
+match_inner(pat::QuoteNode, ex::QuoteNode, env) =
+  match(pat.value, ex.value, env)
+
 isslurp(s) = false
 isslurp(s::Symbol) = Base.ismatch(r"[^_]__$", string(s))
 
