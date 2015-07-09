@@ -7,7 +7,7 @@ allbindings(pat, bs) =
 allbindings(pat) = (bs = Any[]; allbindings(pat, bs); bs)
 
 function bindinglet(bs, body)
-  ex = :(let
+  ex = :(let $(esc(:env)) = env
            $body
          end)
   for b in bs
