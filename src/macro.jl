@@ -32,7 +32,7 @@ end
 macro match (ex, lines)
   @assert isexpr(lines, :block)
   result = quote
-    ex = $ex
+    ex = $(esc(ex))
     result = nothing
   end
   for line in rmlines(lines).args
