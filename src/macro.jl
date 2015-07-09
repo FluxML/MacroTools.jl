@@ -16,15 +16,16 @@ function bindinglet(bs, body)
   return ex
 end
 
-function makeclause(line)
+function makeclause(line, els = nothing)
   env = trymatch(:(pat_ -> yes_), line)
   env == nothing && error("Invalid match clause $line")
   pat, yes = env[:pat], env[:yes]
   quote
     env = trymatch($(Expr(:quote, pat)), ex)
     if env != nothing
-      result = $(bindinglet(allbindings(pat), esc(yes)))
-      @goto done
+      $(bindinglet(allbindings(pat), esc(yes)))
+    else
+      $els
     end
   end
 end
@@ -33,15 +34,12 @@ macro match (ex, lines)
   @assert isexpr(lines, :block)
   result = quote
     ex = $(esc(ex))
-    result = nothing
   end
-  for line in rmlines(lines).args
+  body = nothing
+  for line in reverse(rmlines(lines).args)
     isline(result) && push!(result, line)
-    push!(result.args, makeclause(line))
+    body = makeclause(line, body)
   end
-  push!(result.args, (quote
-                        @label done
-                        result
-                      end).args...)
+  push!(result.args, body)
   return result
 end
