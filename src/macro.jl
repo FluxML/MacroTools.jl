@@ -1,5 +1,5 @@
 allbindings(pat, bs) =
-  isbinding(pat) || isslurp(pat) ? push!(bs, bname(pat)) :
+  isbinding(pat) || (isslurp(pat) && pat ≠ :__) ? push!(bs, bname(pat)) :
   isexpr(pat, :$) ? bs :
   isa(pat, Expr) ? map(pat -> allbindings(pat, bs), [pat.head, pat.args...]) :
   bs

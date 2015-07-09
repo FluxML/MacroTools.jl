@@ -21,7 +21,7 @@ match_inner(pat::QuoteNode, ex::QuoteNode, env) =
   match(pat.value, ex.value, env)
 
 isslurp(s) = false
-isslurp(s::Symbol) = Base.ismatch(r"[^_]__$", string(s))
+isslurp(s::Symbol) = s == :__ || Base.ismatch(r"[^_]__$", string(s))
 
 function slurprange(pat)
   slurps = length(filter(isslurp, pat))
@@ -53,7 +53,7 @@ function match_inner(pat::Expr, ex::Expr, env)
     end
 
     if isslurp(p)
-      env[bname(p)] = slurp
+      p ≠ :__ && (env[bname(p)] = slurp)
     else
       match(p, ex.args[i], env)
       i += 1
@@ -70,6 +70,7 @@ blockunify(a, b) =
 
 function match(pat, ex, env)
   pat, ex = unblock(pat), unblock(ex)
+  pat == :_ && return env
   isbinding(pat) && return assoc!(env, bname(pat), ex)
   pat, ex = blockunify(pat, ex)
   return match_inner(pat, ex, env)
