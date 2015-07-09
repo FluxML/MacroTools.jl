@@ -6,7 +6,7 @@ end
 nomatch(pat, ex) = throw(MatchError(pat, ex))
 
 isbinding(s) = false
-isbinding(s::Symbol) = ismatch(r"[^_]_$", string(s))
+isbinding(s::Symbol) = Base.ismatch(r"[^_]_$", string(s))
 
 function bname(s::Symbol)
   symbol(Base.match(r"^(\w*?)_+", string(s)).captures[1])
@@ -18,7 +18,7 @@ function match_inner(pat, ex, env)
 end
 
 isslurp(s) = false
-isslurp(s::Symbol) = ismatch(r"[^_]__$", string(s))
+isslurp(s::Symbol) = Base.ismatch(r"[^_]__$", string(s))
 
 function slurprange(pat)
   slurps = length(filter(isslurp, pat))
@@ -72,3 +72,20 @@ function match(pat, ex, env)
 end
 
 match(pat, ex) = match(pat, ex, Dict())
+
+function ismatch(pat, ex)
+  try
+    match(pat, ex)
+    return true
+  catch e
+    isa(e, MatchError) ? (return false) : rethrow()
+  end
+end
+
+function trymatch(pat, ex)
+  try
+    match(pat, ex)
+  catch e
+    isa(e, MatchError) ? (return) : rethrow()
+  end
+end
