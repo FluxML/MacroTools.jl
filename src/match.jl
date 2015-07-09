@@ -44,7 +44,8 @@ function match_inner(pat::Expr, ex::Expr, env)
   slurp = Any[]
   i = 1
   for p in pat.args
-    i > length(ex.args) && nomatch(pat, ex)
+    i > length(ex.args) &&
+      (isslurp(p) ? (env[bname(p)] = slurp) : nomatch(pat, ex))
 
     while inrange(i, sr, length(ex.args))
       push!(slurp, ex.args[i])
