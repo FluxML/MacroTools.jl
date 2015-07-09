@@ -1,5 +1,6 @@
 module ExpressionMatch
 
-# package code goes here
+include("utils.jl")
+include("match.jl")
 
 end # module
