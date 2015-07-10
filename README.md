@@ -37,6 +37,7 @@ julia> @match ex begin
            fields__
          end -> (T, fields)
        end
+(:Foo,{:(x::Int),:y})
 ```
 
 Which is a bit nicer, IMHO. `@match` can take multiple clauses to act as
