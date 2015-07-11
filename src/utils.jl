@@ -19,6 +19,18 @@ function unblock(ex)
   return unblock(exs[1])
 end
 
+namify(s::Symbol) = s
+namify(ex::Expr) = namify(ex.args[1])
+
+Base.macroexpand(m::Module, ex) =
+  eval(m, :(macroexpand($(Expr(:quote, ex)))))
+
+subs(ex::Expr, s, s′) =
+  ex == s ? s′ :
+    Expr(ex.head, map(ex -> subs(ex, s, s′), ex.args)...)
+
+subs(ex, s, s′) = ex == s ? s′ : ex
+
 """
 More convenient macro expansion, e.g.
 
