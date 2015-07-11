@@ -9,7 +9,7 @@ isbinding(s) = false
 isbinding(s::Symbol) = Base.ismatch(r"[^_]_(_str)?$", string(s))
 
 function bname(s::Symbol)
-  symbol(Base.match(r"^@?(\w*?)_+", string(s)).captures[1])
+  symbol(Base.match(r"^@?(.*)_(_str)?$", string(s)).captures[1])
 end
 
 function match_inner(pat, ex, env)
@@ -68,8 +68,14 @@ blockunify(a, b) =
   !isexpr(a, :block) && isexpr(b, :block) ? (Expr(:block, a), b) :
   (a, b)
 
+function normalise(ex)
+  ex = unblock(ex)
+  isa(ex, QuoteNode) && (ex = Expr(:quote, ex.value))
+  return ex
+end
+
 function match(pat, ex, env)
-  pat, ex = unblock(pat), unblock(ex)
+  pat, ex = normalise(pat), normalise(ex)
   pat == :_ && return env
   isbinding(pat) && return assoc!(env, bname(pat), ex)
   pat, ex = blockunify(pat, ex)

@@ -1,5 +1,6 @@
 allbindings(pat, bs) =
   isbinding(pat) || (isslurp(pat) && pat ≠ :__) ? push!(bs, bname(pat)) :
+  istb(pat) ? push!(bs, tbname(pat)) :
   isexpr(pat, :$) ? bs :
   isa(pat, Expr) ? map(pat -> allbindings(pat, bs), [pat.head, pat.args...]) :
   bs
@@ -20,10 +21,12 @@ function makeclause(line, els = nothing)
   env = trymatch(:(pat_ -> yes_), line)
   env == nothing && error("Invalid match clause $line")
   pat, yes = env[:pat], env[:yes]
+  bs = allbindings(pat)
+  pat = subtb(pat)
   quote
     env = trymatch($(Expr(:quote, pat)), ex)
     if env != nothing
-      $(bindinglet(allbindings(pat), esc(yes)))
+      $(bindinglet(bs, esc(yes)))
     else
       $els
     end
