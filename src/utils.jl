@@ -1,4 +1,4 @@
-export isexpr, isline, rmlines, unblock, @expand
+export isexpr, isline, rmlines, unblock, namify, isdef, @expand
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -36,6 +36,10 @@ More convenient macro expansion, e.g.
 
     @expand @time foo()
 """
-macro expand (ex)
+macro expand(ex)
   :(macroexpand($(Expr(:quote, ex))))
 end
+
+isdef(ex) = ismatch(or_(:(function _(__) _ end),
+                        :(f_(__) = _)),
+                    ex)

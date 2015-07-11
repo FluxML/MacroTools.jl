@@ -35,7 +35,7 @@ function makeclause(line, els = nothing)
   end
 end
 
-macro match (ex, lines)
+macro match(ex, lines)
   @assert isexpr(lines, :block)
   result = quote
     ex = $(esc(ex))
