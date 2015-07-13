@@ -29,11 +29,11 @@ julia> if isexpr(ex.args[2], :type)
 
 But this is hard to write – since you have to deconstruct the `type`
 expression by hand – and hard to read, since you can't tell at a glance
-what's being acheived. On top of that, there's a bunch of messy stuff to
-deal with like besky `begin` blocks which wrap a single expression, line
+what's being achieved. On top of that, there's a bunch of messy stuff to
+deal with like pesky `begin` blocks which wrap a single expression, line
 numbers, etc. etc.
 
-Enter ExpressionMatch:
+Enter MacroTools:
 
 ```julia
 julia> @match ex begin

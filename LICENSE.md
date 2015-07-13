@@ -1,4 +1,4 @@
-The ExpressionMatch.jl package is licensed under the MIT "Expat" License:
+The MacroTools.jl package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2015: Mike Innes.
 >
