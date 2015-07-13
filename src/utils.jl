@@ -1,4 +1,4 @@
-export isexpr, isline, rmlines, unblock, namify, isdef, @expand
+export isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -51,11 +51,13 @@ namify(ex::Expr) = namify(ex.args[1])
 Base.macroexpand(m::Module, ex) =
   eval(m, :(macroexpand($(Expr(:quote, ex)))))
 
-subs(ex::Expr, s, s′) =
-  ex == s ? s′ :
-    Expr(ex.head, map(ex -> subs(ex, s, s′), ex.args)...)
+walk(x, inner, outer) = outer(x)
+walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
 
-subs(ex, s, s′) = ex == s ? s′ : ex
+postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
+prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
+
+subs(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
 
 """
 More convenient macro expansion, e.g.
