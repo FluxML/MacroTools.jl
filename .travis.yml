@@ -10,4 +10,4 @@ notifications:
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("ExpressionMatch"); Pkg.test("ExpressionMatch"; coverage=true)'
+#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("MacroTools"); Pkg.test("MacroTools"; coverage=true)'

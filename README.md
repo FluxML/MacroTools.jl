@@ -33,7 +33,7 @@ what's being achieved. On top of that, there's a bunch of messy stuff to
 deal with like pesky `begin` blocks which wrap a single expression, line
 numbers, etc. etc.
 
-Enter ExpressionMatch:
+Enter MacroTools:
 
 ```julia
 julia> @match ex begin
