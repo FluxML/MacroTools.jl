@@ -47,3 +47,18 @@ macro match(ex, lines)
   push!(result.args, body)
   return result
 end
+
+macro capture(ex, pat)
+  pat = subtb(subor(pat))
+  bs = allbindings(pat)
+  quote
+    $([:($(esc(b)) = nothing) for b in bs]...)
+    env = trymatch($(Expr(:quote, pat)), $(esc(ex)))
+    if env == nothing
+      false
+    else
+      $([:($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)) for b in bs]...)
+      true
+    end
+  end
+end

@@ -1,6 +1,6 @@
 module MacroTools
 
-export @match
+export @match, @capture
 
 include("utils.jl")
 include("match.jl")
