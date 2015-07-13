@@ -19,7 +19,7 @@ function bindinglet(bs, body)
 end
 
 function makeclause(line, els = nothing)
-  env = trymatch(:(pat_ -> yes_), line)
+  env = trymatch(:(pat_ => yes_), line)
   env == nothing && error("Invalid match clause $line")
   pat, yes = env[:pat], env[:yes]
   pat = subor(pat)
