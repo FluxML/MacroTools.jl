@@ -72,3 +72,21 @@ end
 isdef(ex) = ismatch(or_(:(function _(__) _ end),
                         :(f_(__) = _)),
                     ex)
+
+function longdef(ex)
+  prewalk(ex) do ex
+    @match ex begin
+      (f_(args__) = body_) => :(function $f($(args...)) $body end)
+      _ => ex
+    end
+  end
+end
+
+function shortdef(ex)
+  prewalk(ex) do ex
+    @match ex begin
+      function f_(args__) body_ end => :($f($(args...)) = $body)
+      _ => ex
+    end
+  end
+end
