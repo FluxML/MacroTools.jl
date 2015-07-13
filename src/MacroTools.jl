@@ -1,4 +1,4 @@
-module ExpressionMatch
+module MacroTools
 
 export @match
 
