@@ -1,6 +1,10 @@
-# ExpressionMatch.jl
+# MacroTools.jl
 
-This is a small library designed to help macro writers deconstruct Julia
+This library provides helpful tools for writing macros, notably a very simple
+but templating system and some functions that have proven useful to me (see
+`utils.jl`.)
+
+Template matching enables macro writers to deconstruct Julia
 expressions in a more declarative way, and without having to know in
 great detail how syntax is represented internally. For example, say you
 have a type definition:
@@ -35,7 +39,7 @@ Enter ExpressionMatch:
 julia> @match ex begin
          type T_
            fields__
-         end -> (T, fields)
+         end => (T, fields)
        end
 (:Foo,{:(x::Int),:y})
 ```
