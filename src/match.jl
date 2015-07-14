@@ -78,6 +78,7 @@ function match(pat, ex, env)
   pat, ex = normalise(pat), normalise(ex)
   pat == :_ && return env
   isbinding(pat) && return assoc!(env, bname(pat), ex)
+  isslurp(pat) && return assoc!(env, bname(pat), Any[ex])
   pat, ex = blockunify(pat, ex)
   return match_inner(pat, ex, env)
 end
