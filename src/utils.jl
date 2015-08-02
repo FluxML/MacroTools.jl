@@ -103,7 +103,7 @@ macro hook(ex)
   end
   sig = :($(sig...),)
   quote
-    let $(esc(:super)) = which($(esc(f)), $(esc(sig))).func
+    let $(esc(:super)) = which($(esc(f)), $sig).func
       $(esc(:(function $f($(args...))
         $body
       end)))
