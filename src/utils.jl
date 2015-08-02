@@ -1,4 +1,4 @@
-export isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand
+export isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand, @hook
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -87,6 +87,26 @@ function shortdef(ex)
     @match ex begin
       function f_(args__) body_ end => :($f($(args...)) = $body)
       _ => ex
+    end
+  end
+end
+
+macro hook(ex)
+  @capture(shortdef(ex), f_(args__) = body_) || error("Invalid hook $ex")
+  sig = map(args) do arg
+    @match arg begin
+      _::T_... => :(Vararg{$(esc(T))})
+      _... => :(Vararg{Any})
+      _::T_ => esc(T)
+      _     => :Any
+    end
+  end
+  sig = :($(sig...),)
+  quote
+    let $(esc(:super)) = which($(esc(f)), $(esc(sig))).func
+      $(esc(:(function $f($(args...))
+        $body
+      end)))
     end
   end
 end
