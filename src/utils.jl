@@ -1,4 +1,4 @@
-export isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand, @hook
+export isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand, @hook, makeif
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -89,6 +89,10 @@ function shortdef(ex)
       _ => ex
     end
   end
+end
+
+function makeif(clauses, els = nothing)
+  foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
 end
 
 macro hook(ex)
