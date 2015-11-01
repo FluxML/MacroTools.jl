@@ -5,6 +5,11 @@ end
 
 nomatch(pat, ex) = throw(MatchError(pat, ex))
 
+function store!(env, name, ex)
+  haskey(env, name) && !(env[name] == ex) && nomatch(name, ex)
+  assoc!(env, name, ex)
+end
+
 isbinding(s) = false
 isbinding(s::Symbol) = Base.ismatch(r"[^_]_(_str)?$", string(s))
 
@@ -45,7 +50,7 @@ function match_inner(pat::Expr, ex::Expr, env)
   i = 1
   for p in pat.args
     i > length(ex.args) &&
-      (isslurp(p) ? (env[bname(p)] = slurp) : nomatch(pat, ex))
+      (isslurp(p) ? store!(env, bname(p), slurp) : nomatch(pat, ex))
 
     while inrange(i, sr, length(ex.args))
       push!(slurp, ex.args[i])
@@ -53,7 +58,7 @@ function match_inner(pat::Expr, ex::Expr, env)
     end
 
     if isslurp(p)
-      p ≠ :__ && (env[bname(p)] = slurp)
+      p ≠ :__ && store!(env, bname(p), slurp)
     else
       match(p, ex.args[i], env)
       i += 1
@@ -77,8 +82,8 @@ end
 function match(pat, ex, env)
   pat, ex = normalise(pat), normalise(ex)
   pat == :_ && return env
-  isbinding(pat) && return assoc!(env, bname(pat), ex)
-  isslurp(pat) && return assoc!(env, bname(pat), Any[ex])
+  isbinding(pat) && return store!(env, bname(pat), ex)
+  isslurp(pat) && return store!(env, bname(pat), Any[ex])
   pat, ex = blockunify(pat, ex)
   return match_inner(pat, ex, env)
 end
