@@ -76,6 +76,7 @@ blockunify(a, b) =
 function normalise(ex)
   ex = unblock(ex)
   isa(ex, QuoteNode) && (ex = Expr(:quote, ex.value))
+  isexpr(ex, :kw) && (ex = Expr(:(=), ex.args...))
   return ex
 end
 

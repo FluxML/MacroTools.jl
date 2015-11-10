@@ -51,7 +51,6 @@ end
 macro capture(ex, pat)
   pat = subtb(subor(pat))
   bs = allbindings(pat)
-  isexpr(pat, :kw) && (pat.head = :(=))
   quote
     $([:($(esc(b)) = nothing) for b in bs]...)
     env = trymatch($(Expr(:quote, pat)), $(esc(ex)))
