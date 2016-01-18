@@ -2,8 +2,6 @@ export @esc, isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef,
 
 assoc!(d, k, v) = (d[k] = v; d)
 
-Base.esc(xs::Union{AbstractArray, Tuple}) = map(esc, xs)
-
 macro esc(xs...)
   :($([:($x = esc($x)) for x in esc(xs)]...);)
 end
