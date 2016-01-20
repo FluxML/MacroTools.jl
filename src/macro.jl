@@ -23,11 +23,12 @@ function makeclause(line, els = nothing)
   env = trymatch(:(pat_ => yes_), line)
   env == nothing && error("Invalid match clause $line")
   pat, yes = env[:pat], env[:yes]
+  bs = allbindings(pat)
   pat = subtb(subor(pat))
   quote
     env = trymatch($(Expr(:quote, pat)), ex)
     if env != nothing
-      $(bindinglet(allbindings(pat), esc(yes)))
+      $(bindinglet(bs, esc(yes)))
     else
       $els
     end
@@ -49,8 +50,8 @@ macro match(ex, lines)
 end
 
 macro capture(ex, pat)
-  pat = subtb(subor(pat))
   bs = allbindings(pat)
+  pat = subtb(subor(pat))
   quote
     $([:($(esc(b)) = nothing) for b in bs]...)
     env = trymatch($(Expr(:quote, pat)), $(esc(ex)))
