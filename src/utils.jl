@@ -1,4 +1,4 @@
-export @esc, isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand, @hook, makeif
+export @esc, isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand, makeif
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -97,24 +97,4 @@ end
 
 function makeif(clauses, els = nothing)
   foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
-end
-
-macro hook(ex)
-  @capture(shortdef(ex), f_(args__) = body_) || error("Invalid hook $ex")
-  sig = map(args) do arg
-    @match arg begin
-      _::T_... => :(Vararg{$(esc(T))})
-      _... => :(Vararg{Any})
-      _::T_ => esc(T)
-      _     => :Any
-    end
-  end
-  sig = :($(sig...),)
-  quote
-    let $(esc(:super)) = which($(esc(f)), $sig).func
-      $(esc(:(function $f($(args...))
-        $body
-      end)))
-    end
-  end
 end
