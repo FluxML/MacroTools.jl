@@ -36,12 +36,27 @@ end
 
 let
   ex = :(type Foo
-    x::Int
-    y
-  end)
+           x::Int
+           y
+         end)
   @capture(ex, type T_ fields__ end)
   @test T == :Foo
   @test fields == [:(x::Int), :y]
+end
+
+let
+  ex = :(f(x))
+  @capture(ex, f_(xs__))
+  @test f == :f
+  @test xs == [:x]
+end
+
+let
+  ex = :(f(x, y, z))
+  @capture(ex, f_(x_, xs__))
+  @test f == :f
+  @test x == :x
+  @test xs == [:y, :z]
 end
 
 include("destruct.jl")
