@@ -9,7 +9,7 @@ atoms(f, ex) = MacroTools.postwalk(x -> isatom(x) ? f(x) : x, ex)
 get′(d::Associative, k::Symbol, v...) =
   haskey(d, k) ? d[k] :
   haskey(d, string(k)) ? d[string(k)] :
-  get(d, k, v...)
+  error("Couldn't destruct key `$k` from collection $d")
 
 get′(xs, k, v) = get(xs, k, v)
 get′(xs, k) = getindex(xs, k)
