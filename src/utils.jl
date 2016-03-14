@@ -69,6 +69,9 @@ More convenient macro expansion, e.g.
     @expand @time foo()
 """
 macro expand(ex)
+  ex = postwalk(ex) do ex
+    isexpr(ex, :$) ? Expr(:quote, ex) : ex
+  end
   :(macroexpand($(Expr(:quote, ex))))
 end
 
