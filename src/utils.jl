@@ -61,7 +61,7 @@ walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
 postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
 prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
 
-subs(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
+replace(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
 
 """
 More convenient macro expansion, e.g.
