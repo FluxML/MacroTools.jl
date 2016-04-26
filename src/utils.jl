@@ -1,4 +1,5 @@
-export @esc, isexpr, isline, rmlines, unblock, namify, isdef, longdef, shortdef, @expand, makeif
+export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
+  longdef, shortdef, @expand, makeif
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -45,6 +46,8 @@ function unblock(ex)
   return unblock(exs[1])
 end
 
+block(ex) = isexpr(ex, :block) ? ex : :($ex;)
+
 """
 An easy way to get pull the (function/type) name out of
 expressions like `foo{T}` or `Bar{T} <: Vector{T}`.
@@ -62,6 +65,14 @@ postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
 prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
 
 replace(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
+
+function inexpr(ex, x)
+  result = false
+  MacroTools.postwalk(ex) do y
+    y == x && (result = true)
+  end
+  return result
+end
 
 """
 More convenient macro expansion, e.g.
