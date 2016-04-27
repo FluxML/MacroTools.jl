@@ -74,6 +74,19 @@ function inexpr(ex, x)
   return result
 end
 
+global const animals = split(readstring(joinpath(dirname(@__FILE__), "..", "animals.txt")))
+
+isgensym(s::Symbol) = contains(string(s), "#")
+isgensym(s) = false
+
+function alias_gensyms(ex)
+  syms = Dict{Symbol, Symbol}()
+  s(x) = get!(syms, x, lowercase(rand(filter(s->!(s in values(syms)), animals))))
+  prewalk(ex) do x
+    isgensym(x) ? s(x) : x
+  end
+end
+
 """
 More convenient macro expansion, e.g.
 
@@ -83,7 +96,7 @@ macro expand(ex)
   ex = postwalk(ex) do ex
     isexpr(ex, :$) ? Expr(:quote, ex) : ex
   end
-  :(macroexpand($(Expr(:quote, ex))))
+  :(alias_gensyms(macroexpand($(Expr(:quote, ex)))))
 end
 
 "Test for function definition expressions."
