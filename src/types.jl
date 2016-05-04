@@ -6,14 +6,14 @@ end
 istb(s) = false
 istb(s::Symbol) = !(endswith(string(s), "_") || endswith(string(s), "_str")) && contains(string(s), "_")
 
-tbname(s::Symbol) = symbol(split(string(s), "_")[1])
+tbname(s::Symbol) = Symbol(split(string(s), "_")[1])
 tbname(s::TypeBind) = s.name
 
 totype(s::Symbol) = string(s)[1] in 'A':'Z' ? s : Expr(:quote, s)
 
 function tbnew(s::Symbol)
   istb(s) || return s
-  ts = map(symbol, split(string(s), "_"))
+  ts = map(Symbol, split(string(s), "_"))
   name = shift!(ts)
   ts = map(totype, ts)
   Expr(:$, :(MacroTools.TypeBind($(Expr(:quote, name)), Set{Any}([$(ts...)]))))
