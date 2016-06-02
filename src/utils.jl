@@ -108,6 +108,8 @@ function longdef(ex)
   prewalk(ex) do ex
     @match ex begin
       (f_(args__) = body_) => :(function $f($(args...)) $body end)
+      ((args__,) -> body_) => :(function ($(args...),) $body end)
+      (arg_ -> body_) => :(function ($arg,) $body end)
       _ => ex
     end
   end
@@ -117,6 +119,8 @@ function shortdef(ex)
   prewalk(ex) do ex
     @match ex begin
       function f_(args__) body_ end => :($f($(args...)) = $body)
+      function (args__,) body_ end => :(($(args...),) -> $body)
+      (arg_ -> body_) => :(($arg,) -> $body)
       _ => ex
     end
   end
