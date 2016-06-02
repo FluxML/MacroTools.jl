@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif
+  longdef, shortdef, @expand, makeif, prettify
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -140,3 +140,21 @@ flatten(ex) = postwalk(flatten1, ex)
 function makeif(clauses, els = nothing)
   foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
 end
+
+unresolve1(x) = x
+unresolve1(f::Function) = methods(f).mt.name
+
+unresolve(ex::Expr) = prewalk(unresolve1, ex)
+
+function resyntax(ex)
+  prewalk(ex) do x
+    @match x begin
+      setfield!(x_, :f_, x_.f_ + v_) => :($x.$f += $v)
+      setfield!(x_, :f_, v_) => :($x.$f = $v)
+      transpose(x_) => :($x')
+      _ => x
+    end
+  end
+end
+
+prettify(ex) = ex |> flatten |> unresolve |> resyntax |> alias_gensyms
