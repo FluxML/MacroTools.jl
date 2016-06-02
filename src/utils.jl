@@ -126,6 +126,17 @@ function shortdef(ex)
   end
 end
 
+function flatten1(ex)
+  isexpr(ex, :block) || return ex
+  ex′ = :(;)
+  for x in ex.args
+    isexpr(x, :block) ? append!(ex′.args, x.args) : push!(ex′.args, x)
+  end
+  return ex′
+end
+
+flatten(ex) = postwalk(flatten1, ex)
+
 function makeif(clauses, els = nothing)
   foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
 end
