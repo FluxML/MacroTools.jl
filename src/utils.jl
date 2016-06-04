@@ -151,7 +151,8 @@ function resyntax(ex)
     @match x begin
       setfield!(x_, :f_, x_.f_ + v_) => :($x.$f += $v)
       setfield!(x_, :f_, v_) => :($x.$f = $v)
-      transpose(x_) => :($x')
+      ctranspose(x_) => :($x')
+      transpose(x_) => :($x.')
       _ => x
     end
   end
