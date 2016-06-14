@@ -154,8 +154,9 @@ function resyntax(ex)
       setfield!(x_, :f_, x_.f_ + v_) => :($x.$f += $v)
       setfield!(x_, :f_, v_) => :($x.$f = $v)
       getindex(x_, i__) => :($x[$(i...)])
-      transpose(x_) => :($x')
       tuple(xs__) => :($(xs...),)
+      ctranspose(x_) => :($x')
+      transpose(x_) => :($x.')
       _ => x
     end
   end
