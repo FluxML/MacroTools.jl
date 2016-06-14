@@ -30,8 +30,10 @@ isline(ex) = isexpr(ex, :line) || isa(ex, LineNumberNode)
 
 Remove the line nodes from a block or array of expressions.
 """
-rmlines(xs) = filter(x->!isline(x), xs)
-rmlines(x::Expr) = Expr(x.head, rmlines(x.args)...)
+rmlines(x) = x
+rmlines(x::Expr) = Expr(x.head, filter(x->!isline(x), x.args)...)
+
+striplines(ex) = prewalk(rmlines, ex)
 
 """
     unblock(expr)
@@ -157,4 +159,4 @@ function resyntax(ex)
   end
 end
 
-prettify(ex) = ex |> flatten |> unresolve |> resyntax |> alias_gensyms
+prettify(ex) = ex |> flatten |> unresolve |> resyntax |> alias_gensyms |> striplines
