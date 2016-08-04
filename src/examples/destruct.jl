@@ -20,7 +20,7 @@ get′(xs, k, v) = get(xs, k, v)
 get′(xs, k) = getindex(xs, k)
 
 getkeym(args...) = :(MacroTools.get′($(args...)))
-getfieldm(val, i) = :($val.($i))
+getfieldm(val, i) = :(getfield($val,$i))
 getfieldm(val, i, default) = error("Can't destructure fields with default values")
 
 function destruct_key(pat, val, getm)
