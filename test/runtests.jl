@@ -60,6 +60,15 @@ let
 end
 
 let
+  ex = quote
+    function foo(a, b)
+      return a+b
+    end
+  end
+  @assert @capture(shortdef(ex), f_(args__) = body_)
+end
+
+let
   ex = :(a = b)
   @capture(ex, a_ = b_)
   @test (a, b) == (:a, :b)

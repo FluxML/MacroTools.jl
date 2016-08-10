@@ -82,9 +82,10 @@ function normalise(ex)
 end
 
 function match(pat, ex, env)
+  pat = normalise(pat)
   pat == :_ && return env
   isbinding(pat) && return store!(env, bname(pat), ex)
-  pat, ex = normalise(pat), normalise(ex)
+  ex = normalise(ex)
   pat, ex = blockunify(pat, ex)
   isslurp(pat) && return store!(env, bname(pat), Any[ex])
   return match_inner(pat, ex, env)
