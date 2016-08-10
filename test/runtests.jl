@@ -59,4 +59,18 @@ let
   @test xs == [:y, :z]
 end
 
+let
+  ex = :(a = b)
+  @capture(ex, a_ = b_)
+  @test (a, b) == (:a, :b)
+end
+
+let
+  ex = :(f(a = b))
+  @capture(ex, f(a_ = b_))
+  @test (a, b) == (:a, :b)
+  @capture(ex, f(x_))
+  @test isexpr(x, :kw)
+end
+
 include("destruct.jl")
