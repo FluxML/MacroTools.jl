@@ -57,8 +57,8 @@ sequence of arguments into an array. For example:
 
 ```julia
 julia> @match :[1, 2, 3, 4, 5, 6, 7] begin
-         [1, a_, 3, b__, c_] -> (a, b, c)
-         [a__] -> a
+         [1, a_, 3, b__, c_] => (a, b, c)
+         [a__] => a
        end
 (2,{4,5,6},7)
 ```
