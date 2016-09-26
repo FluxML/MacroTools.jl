@@ -95,10 +95,7 @@ More convenient macro expansion, e.g.
     @expand @time foo()
 """
 macro expand(ex)
-  ex = postwalk(ex) do ex
-    isexpr(ex, :$) ? Expr(:quote, ex) : ex
-  end
-  :(alias_gensyms(macroexpand($(Expr(:quote, ex)))))
+  :(alias_gensyms(macroexpand($(ex,)[1])))
 end
 
 "Test for function definition expressions."
