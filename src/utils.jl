@@ -119,6 +119,7 @@ function shortdef(ex)
     @match ex begin
       function f_(args__) body_ end => :($f($(args...)) = $body)
       function (args__,) body_ end => :(($(args...),) -> $body)
+      ((args__,) -> body_) => ex
       (arg_ -> body_) => :(($arg,) -> $body)
       _ => ex
     end
