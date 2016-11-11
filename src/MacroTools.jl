@@ -12,5 +12,6 @@ include("macro.jl")
 include("utils.jl")
 
 include("examples/destruct.jl")
+include("examples/threading.jl")
 
 end # module
