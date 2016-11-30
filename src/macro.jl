@@ -45,7 +45,7 @@ macro match(ex, lines)
     line_annotation = lines.args[line_number - 1]
     line = lines.args[line_number]
     isline(result) && push!(result, line)
-    body = MacroTools.makeclause(line, body)
+    body = makeclause(line, body)
     body.args[4].args[2].args[1] = line_annotation
   end
   push!(result.args, body)
