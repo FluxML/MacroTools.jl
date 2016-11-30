@@ -41,9 +41,12 @@ macro match(ex, lines)
     ex = $(esc(ex))
   end
   body = nothing
-  for line in reverse(rmlines(lines).args)
+  for line_number in length(lines.args):-2:2
+    line_annotation = lines.args[line_number - 1]
+    line = lines.args[line_number]
     isline(result) && push!(result, line)
-    body = makeclause(line, body)
+    body = MacroTools.makeclause(line, body)
+    body.args[4].args[2].args[1] = line_annotation
   end
   push!(result.args, body)
   return result
