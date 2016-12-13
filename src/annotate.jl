@@ -1,5 +1,5 @@
 immutable AnnotatedLine
-    line_number::Expr
+    line_number
     expression
 end
 
@@ -7,7 +7,7 @@ annotate(arguments) = begin
     result = []
     i = 1
     while i <= length(arguments)
-        if isexpr(arguments[i], :line)
+        if isline(arguments[i])
             push!(result, AnnotatedLine(arguments[i], arguments[i + 1] ) )
             i = i + 2
         else
