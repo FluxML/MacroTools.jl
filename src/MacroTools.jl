@@ -5,6 +5,7 @@ using Compat
 
 export @match, @capture
 
+include("annotate.jl")
 include("match.jl")
 include("types.jl")
 include("union.jl")
