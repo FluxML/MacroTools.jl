@@ -7,6 +7,10 @@ macro esc(xs...)
   :($([:($x = esc($x)) for x in map(esc, xs)]...);)
 end
 
+macro q(ex)
+  Expr(:quote, striplines(ex))
+end
+
 """
     isexpr(x, ts...)
 
@@ -106,9 +110,9 @@ isdef(ex) = ismatch(or_(:(function _(__) _ end),
 function longdef(ex)
   prewalk(ex) do ex
     @match ex begin
-      (f_(args__) = body_) => :(function $f($(args...)) $body end)
-      ((args__,) -> body_) => :(function ($(args...),) $body end)
-      (arg_ -> body_) => :(function ($arg,) $body end)
+      (f_(args__) = body_) => @q function $f($(args...)) $body end
+      ((args__,) -> body_) => @q function ($(args...),) $body end
+      (arg_ -> body_) => @q function ($arg,) $body end
       _ => ex
     end
   end
@@ -117,10 +121,10 @@ end
 function shortdef(ex)
   prewalk(ex) do ex
     @match ex begin
-      function f_(args__) body_ end => :($f($(args...)) = $body)
-      function (args__,) body_ end => :(($(args...),) -> $body)
+      function f_(args__) body_ end => @q $f($(args...)) = $body
+      function (args__,) body_ end => @q ($(args...),) -> $body
       ((args__,) -> body_) => ex
-      (arg_ -> body_) => :(($arg,) -> $body)
+      (arg_ -> body_) => @q ($arg,) -> $body
       _ => ex
     end
   end
