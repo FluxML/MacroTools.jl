@@ -136,7 +136,7 @@ function flatten1(ex)
   for x in ex.args
     isexpr(x, :block) ? append!(ex′.args, x.args) : push!(ex′.args, x)
   end
-  return unblock(ex′)
+  return ex′
 end
 
 flatten(ex) = postwalk(flatten1, ex)
