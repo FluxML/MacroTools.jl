@@ -132,7 +132,7 @@ end
 
 function flatten1(ex)
   isexpr(ex, :block) || return ex
-  ex′ = quote end
+  ex′ = :(;)
   for x in ex.args
     isexpr(x, :block) ? append!(ex′.args, x.args) : push!(ex′.args, x)
   end
