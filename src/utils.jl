@@ -165,4 +165,5 @@ function resyntax(ex)
   end
 end
 
-prettify(ex) = ex |> flatten |> unresolve |> resyntax |> alias_gensyms |> striplines
+prettify(ex; lines = false) =
+  ex |> flatten |> unresolve |> resyntax |> alias_gensyms |> (lines ? identity : striplines)
