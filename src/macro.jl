@@ -50,10 +50,8 @@ macro match(ex, lines)
   result = quote
     ex = $(esc(ex))
   end
-  body = nothing
-  for clause in reverse(clauses(lines))
-    body = makeclause(clause..., body)
-  end
+  body = foldr((clause, body) -> makeclause(clause..., body),
+               nothing, rmlines(lines).args)
   push!(result.args, body)
   return result
 end
