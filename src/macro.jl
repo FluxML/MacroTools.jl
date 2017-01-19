@@ -51,7 +51,7 @@ macro match(ex, lines)
     ex = $(esc(ex))
   end
   body = foldr((clause, body) -> makeclause(clause..., body),
-               nothing, rmlines(lines).args)
+               nothing, clauses(lines))
   push!(result.args, body)
   return result
 end
