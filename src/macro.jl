@@ -19,16 +19,27 @@ function bindinglet(bs, body)
   return ex
 end
 
-function makeclause(line, els = nothing)
+function prepare_parts(line)
   env = trymatch(:(pat_ => yes_), line)
   env == nothing && error("Invalid match clause $line")
   pat, yes = env[:pat], env[:yes]
-  bs = allbindings(pat)
-  pat = subtb(subor(pat))
+  itmatched = bindinglet(allbindings(pat), esc(yes))
+  pat = Meta.quot(subtb(subor(pat)))
+  pat, itmatched
+end
+
+function prepare_parts(line::AnnotatedLine)
+    pat, itmatched = prepare_parts(line.expression)
+    itmatched = annotate_line(line.line_number, itmatched)
+    pat, itmatched
+end
+
+function makeclause(line, els = nothing)
+  pat, itmatched = prepare_parts(line)
   quote
-    env = trymatch($(Expr(:quote, pat)), ex)
+    env = trymatch($pat, ex)
     if env != nothing
-      $(bindinglet(bs, esc(yes)))
+      $itmatched
     else
       $els
     end
@@ -41,8 +52,7 @@ macro match(ex, lines)
     ex = $(esc(ex))
   end
   body = nothing
-  for line in reverse(rmlines(lines).args)
-    isline(result) && push!(result, line)
+  for line in reverse(annotate(lines.args))
     body = makeclause(line, body)
   end
   push!(result.args, body)
