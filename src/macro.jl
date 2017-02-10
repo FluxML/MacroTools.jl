@@ -19,10 +19,7 @@ function bindinglet(bs, body)
   return ex
 end
 
-function makeclause(line, els = nothing)
-  env = trymatch(:(pat_ => yes_), line)
-  env == nothing && error("Invalid match clause $line")
-  pat, yes = env[:pat], env[:yes]
+function makeclause(pat, yes, els = nothing)
   bs = allbindings(pat)
   pat = subtb(subor(pat))
   quote
@@ -35,16 +32,26 @@ function makeclause(line, els = nothing)
   end
 end
 
+function clauses(ex)
+  line = nothing
+  clauses = []
+  for l in ex.args
+    isline(l) && (line = l; continue)
+    env = trymatch(:(pat_ => yes_), l)
+    env == nothing && error("Invalid match clause $l")
+    pat, yes = env[:pat], env[:yes]
+    push!(clauses, (pat, :($line;$yes)))
+  end
+  return clauses
+end
+
 macro match(ex, lines)
   @assert isexpr(lines, :block)
   result = quote
     ex = $(esc(ex))
   end
-  body = nothing
-  for line in reverse(rmlines(lines).args)
-    isline(result) && push!(result, line)
-    body = makeclause(line, body)
-  end
+  body = foldr((clause, body) -> makeclause(clause..., body),
+               nothing, clauses(lines))
   push!(result.args, body)
   return result
 end
