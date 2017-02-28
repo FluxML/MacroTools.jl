@@ -3,7 +3,7 @@ module MacroTools
 
 using Compat
 
-export @match, @capture
+export @match, @capture, @simplematch, @simplecapture
 
 include("match.jl")
 include("types.jl")

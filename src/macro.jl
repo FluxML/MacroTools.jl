@@ -19,9 +19,12 @@ function bindinglet(bs, body)
   return ex
 end
 
-function makeclause(pat, yes, els = nothing)
+function makeclause(pat, yes, els = nothing; bind_types = true)
   bs = allbindings(pat)
-  pat = subtb(subor(pat))
+  pat = subor(pat)
+  if bind_types
+    pat = subtb(pat)
+  end
   quote
     env = trymatch($(Expr(:quote, pat)), ex)
     if env != nothing
@@ -45,20 +48,31 @@ function clauses(ex)
   return clauses
 end
 
-macro match(ex, lines)
+function make_match(ex, lines; bind_types = true)
   @assert isexpr(lines, :block)
   result = quote
     ex = $(esc(ex))
   end
-  body = foldr((clause, body) -> makeclause(clause..., body),
+  body = foldr((clause, body) -> makeclause(clause..., body; bind_types = bind_types),
                nothing, clauses(lines))
   push!(result.args, body)
   return result
 end
 
-macro capture(ex, pat)
+macro match(ex, lines)
+  make_match(ex, lines)
+end
+
+macro simplematch(ex, lines)
+  make_match(ex, lines; bind_types = false)
+end
+
+function make_capture(ex, pat; bind_types = true)
   bs = allbindings(pat)
-  pat = subtb(subor(pat))
+  pat = subor(pat)
+  if bind_types
+    pat = subtb(pat)
+  end
   quote
     $([:($(esc(b)) = nothing) for b in bs]...)
     env = trymatch($(Expr(:quote, pat)), $(esc(ex)))
@@ -69,4 +83,12 @@ macro capture(ex, pat)
       true
     end
   end
+end
+
+macro capture(ex, pat)
+  make_capture(ex, pat)
+end
+
+macro capture(ex, pat)
+  make_capture(ex, pat; bind_types = false)
 end

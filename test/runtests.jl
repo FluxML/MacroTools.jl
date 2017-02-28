@@ -82,4 +82,18 @@ let
   @test isexpr(x, :kw)
 end
 
+let
+  ex = :(a_b(c))
+  @simplecapture(ex, a_b(c_))
+  @test c == :c
+end
+
+let
+  ex = :(a_b(c))
+  c = @simplematch ex begin
+    a_b(c_) => c
+  end
+  @test c == :c
+end
+
 include("destruct.jl")
