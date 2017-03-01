@@ -89,6 +89,6 @@ macro capture(ex, pat)
   make_capture(ex, pat)
 end
 
-macro capture(ex, pat)
+macro simplecapture(ex, pat)
   make_capture(ex, pat; bind_types = false)
 end
