@@ -93,6 +93,17 @@ end
 
 which will match e.g. `type Foo ...` but not `type Foo{V} ...`
 
+To opt out of type binding, use `@simplecapture` and `@simplematch`. This
+is useful if you are working with expressions with underscores:
+
+```julia
+ex = :(a_b(c))
+@simplecapture(ex, a_b(c_))
+@simplematch ex begin 
+    a_b(c_) => c
+end
+```
+
 ## Unions
 
 `@match` can also try to match the expression against one pattern or another,
