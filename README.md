@@ -99,6 +99,9 @@ is useful if you are working with expressions with underscores:
 ```julia
 ex = :(a_b(c))
 @simplecapture(ex, a_b(c_))
+@simplematch ex begin 
+    a_b(c_) => c
+end
 ```
 
 ## Unions
