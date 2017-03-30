@@ -86,4 +86,11 @@ macro nothing_macro()
 end
 @test @expand(@nothing_macro) === nothing
 
+let
+    # Ideally we'd compare the result against :(function f(x)::Int 10 end),
+    # but it fails because of :line and :block differences
+    @test longdef(:(f(x)::Int = 10)).head == :function
+    @test shortdef(:(function f(x)::Int 10 end)).head != :function
+end
+
 include("destruct.jl")
