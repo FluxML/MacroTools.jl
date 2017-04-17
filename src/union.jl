@@ -22,3 +22,4 @@ subor(s) = s
 subor(s::Symbol) = s
 subor(s::Expr) = isor(s) ? subor(ornew(s)) : Expr(s.head, map(subor, s.args)...)
 subor(s::OrBind) = OrBind(subor(s.pat1), subor(s.pat2))
+subtb(s::OrBind) = OrBind(subtb(s.pat1), subtb(s.pat2))

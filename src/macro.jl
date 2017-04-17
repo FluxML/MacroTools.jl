@@ -19,11 +19,14 @@ function bindinglet(bs, body)
   return ex
 end
 
+ensurequoted(x) = x
+ensurequoted(x::Union{Expr, Symbol}) = Expr(:quote, x)
+
 function makeclause(pat, yes, els = nothing)
   bs = allbindings(pat)
-  pat = subtb(subor(pat))
+  pat = ensurequoted(subtb(subor(pat)))
   quote
-    env = trymatch($(Expr(:quote, pat)), ex)
+    env = trymatch($(pat), ex)
     if env != nothing
       $(bindinglet(bs, esc(yes)))
     else
