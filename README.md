@@ -71,7 +71,7 @@ julia> a, b, c
 Slurps don't have to be at the end of an expression, but like the
 Highlander there can only be one (per expression).
 
-### Matching on expression type
+### Matching on expression type
 
 `@capture` can match expressions by their type, which is either the `head` of `Expr`
 objects or the `typeof` atomic stuff like `Symbol`s and `Int`s. For example:
