@@ -199,8 +199,8 @@ With these tools in hand, a useful general pattern for macros is:
 ```julia
 macro foo(ex)
   postwalk(ex) do x
-    @capture(ex, _some_pattern_) || return x
-    # do something to x
+    @capture(x, some_pattern) || return x
+    return new_x
   end
 end
 ```
