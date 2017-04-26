@@ -50,7 +50,7 @@ expression, and the expression they match is bound to the
 (underscore-less) variable, as above.
 
 Because `@capture` doubles as a test as well as extracting values, you can
-easily handle unexpected input (which would be a lot harder otherwise):
+easily handle unexpected input (try writing this by hand):
 
 ```julia
 @capture(ex, f_{T_}(xs__) = body_) ||
