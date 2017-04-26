@@ -155,7 +155,7 @@ provide `prewalk`. The difference is the order in which you see sub-expressions;
 last, while `prewalk` is the opposite.
 
 ```julia
-julia> MacroTools.postwalk(x -> @show(x) isa Integer ? x + 1 : x, :(2+3*4));
+julia> postwalk(x -> @show(x) isa Integer ? x + 1 : x, :(2+3*4));
 x = :+
 x = 2
 x = :*
@@ -164,7 +164,7 @@ x = 4
 x = :(4 * 5)
 x = :(3 + 4 * 5)
 
-julia> MacroTools.prewalk(x -> @show(x) isa Integer ? x + 1 : x, :(2+3*4));
+julia> prewalk(x -> @show(x) isa Integer ? x + 1 : x, :(2+3*4));
 x = :(2 + 3 * 4)
 x = :+
 x = 2
@@ -178,11 +178,11 @@ A significant difference is that `prewalk` will walk into whatever expression
 you return.
 
 ```julia
-julia> MacroTools.postwalk(x -> @show(x) isa Integer ? :(a+b) : x, 2)
+julia> postwalk(x -> @show(x) isa Integer ? :(a+b) : x, 2)
 x = 2
 :(a + b)
 
-julia> MacroTools.prewalk(x -> @show(x) isa Integer ? :(a+b) : x, 2)
+julia> prewalk(x -> @show(x) isa Integer ? :(a+b) : x, 2)
 x = 2
 x = :+
 x = :a
