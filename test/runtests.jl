@@ -91,6 +91,13 @@ let
     # but it fails because of :line and :block differences
     @test longdef(:(f(x)::Int = 10)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
+    name, args, kwargs, body, rtype = parsedef(:(foo(a, b::Int=2; c=3)::Int = a+b))
+    @test (name, args, kwargs, body, rtype) ==
+        (:foo, [:a, Expr(:kw, :(b::Int), 2)], [Expr(:kw, :c, 3)],
+         MacroTools.striplines(quote a+b end), :Int)
+    # == isn't defined on Nullables
+    @test map(arg->parsearg(arg)[1:2], args) == [(:a, :Any), (:b, :Int)]
+    @test isnull(parsearg(args[1])[3])
 end
 
 include("destruct.jl")

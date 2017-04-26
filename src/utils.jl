@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif, prettify
+  longdef, shortdef, @expand, makeif, prettify, parsedef, parsearg
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -176,6 +176,65 @@ function shortdef1(ex)
   end
 end
 shortdef(ex) = prewalk(shortdef1, ex)
+
+""" `split_kwargs(x)` splits an argument list into positional and keyword args.
+Returns `(args::Vector, kwargs::Vector)` """
+function split_kwargs(args)
+    positional_args = []
+    kwargs = []
+    for x in args
+        if isa(x, Expr) && x.head == :parameters
+            @assert kwargs == []
+            kwargs = x.args
+        else
+            push!(positional_args, x)
+        end
+    end
+    return (positional_args, kwargs)
+end
+
+"""    parsedef(fdef)
+
+Match a function definition such as
+
+```julia
+function fname(args; kwargs)::return_type
+   body_block
+end
+```
+
+and returns `(fname::Symbol, args::Vector{Any}, kwargs::Vector{Any}, body_block::Expr, return_type)`. `return_type` is `:Any` if not specified. """
+function parsedef(fdef)
+    @match longdef1(fdef) begin
+        (function fname_(args__) body_ end =>
+         (fname, split_kwargs(args)..., body, :Any))
+        (function fname_(args__)::rtype_ body_ end =>
+         (fname, split_kwargs(args)..., body, rtype))
+        any_ => error("Not a function definition: $fdef")
+    end
+end
+
+
+""" `parsearg(arg)` matches function arguments (whether from a definition or a function
+call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
+ - `parsearg(parsedef(:(f(x::Int=2)=3))[2][1]) -> (:x, :Int, Nullable(2))`.
+ - `parsearg(:x) -> (:x, :Any, Nullable())`
+"""
+function parsearg(arg_expr)
+    if isa(arg_expr, Expr) && arg_expr.head == :kw
+        default = Nullable(arg_expr.args[2])
+        arg_expr = arg_expr.args[1]
+    else
+        default = Nullable()
+    end
+    if !(@capture(arg_expr, name_::typ_))
+        name = arg_expr
+        typ = :Any
+    end
+    @assert isa(name, Symbol) "Bad function argument: $arg_expr"
+    return (name, typ, default)
+end
+
 
 function flatten1(ex)
   isexpr(ex, :block) || return ex

@@ -206,3 +206,21 @@ macro foo(ex)
   end
 end
 ```
+
+## Function definitions
+
+`parsedef(fundef)` matches a function definition such as
+
+```julia
+function fname(args; kwargs)::return_type
+   body_block
+end
+```
+
+and returns `(fname::Symbol, args::Vector{Any}, kwargs::Vector{Any}, body_block::Expr, return_type)`. `return_type` is `:Any` if not specified.
+
+`parsearg(arg)` matches a function argument (whether from a definition, or a funtion
+call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
+
+ - `parsearg(parsedef(:(f(x::Int=2)=3))[2][1]) -> (:x, :Int, Nullable(2))`.
+ - `parsearg(:x) -> (:x, :Any, Nullable())`
