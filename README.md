@@ -114,3 +114,93 @@ expressions, e.g.
 
 matches a function definition, with a single type parameter bound to `T` if possible.
 If not, `T = nothing`.
+
+## Expression Walking
+
+If you've ever written any more interesting macros, you've probably found
+yourself writing recursive functions to work with nested `Expr` trees.
+MacroTools' `prewalk` and `postwalk` functions factor out the recursion, making
+macro code much more concise and robust.
+
+These expression-walking functions essentially provide a kind of
+find-and-replace for expression trees. For example:
+
+```julia
+julia> using MacroTools: prewalk, postwalk
+
+julia> postwalk(x -> x isa Integer ? x + 1 : x, :(2+3))
+:(3 + 4)
+```
+
+In other words, look at each item in the tree; if it's an integer, add one, if not, leave it alone.
+
+We can do more complex things if we combine this with `@capture`. For example, say we want to insert an extra argument into all function calls:
+
+```julia
+julia> ex = quote
+         x = f(y, g(z))
+         return h(x)
+       end
+
+julia> postwalk(x -> @capture(x, f_(xs__)) ? :($f(5, $(xs...))) : x, ex)
+quote  # REPL[20], line 2:
+    x = f(5, y, g(5, z)) # REPL[20], line 3:
+    return h(5, x)
+end
+```
+
+Most of the time, you can use `postwalk` without worrying about it, but we also
+provide `prewalk`. The difference is the order in which you see sub-expressions;
+`postwalk` sees the leaves of the `Expr` tree first and the whole expression
+last, while `prewalk` is the opposite.
+
+```julia
+julia> MacroTools.postwalk(x -> @show(x) isa Integer ? x + 1 : x, :(2+3*4));
+x = :+
+x = 2
+x = :*
+x = 3
+x = 4
+x = :(4 * 5)
+x = :(3 + 4 * 5)
+
+julia> MacroTools.prewalk(x -> @show(x) isa Integer ? x + 1 : x, :(2+3*4));
+x = :(2 + 3 * 4)
+x = :+
+x = 2
+x = :(3 * 4)
+x = :*
+x = 3
+x = 4
+```
+
+A significant difference is that `prewalk` will walk into whatever expression
+you return.
+
+```julia
+julia> MacroTools.postwalk(x -> @show(x) isa Integer ? :(a+b) : x, 2)
+x = 2
+:(a + b)
+
+julia> MacroTools.prewalk(x -> @show(x) isa Integer ? :(a+b) : x, 2)
+x = 2
+x = :+
+x = :a
+x = :b
+:(a + b)
+```
+
+This makes it somewhat more prone to infinite loops; for example, if we returned
+`:(1+b)` instead of `:(a+b)`, `prewalk` would hang trying to expand all of the
+`1`s in the expression.
+
+With these tools in hand, a useful general pattern for macros is:
+
+```julia
+macro foo(ex)
+  postwalk(ex) do x
+    @capture(ex, _some_pattern_) || return x
+    # do something to x
+  end
+end
+```
