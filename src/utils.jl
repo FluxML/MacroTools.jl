@@ -3,10 +3,25 @@ export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
 
 assoc!(d, k, v) = (d[k] = v; d)
 
+"""
+    @esc x y
+
+is the same as
+
+    x = esc(x)
+    y = esc(y)
+"""
 macro esc(xs...)
   :($([:($x = esc($x)) for x in map(esc, xs)]...);)
 end
 
+"""
+    @q [expression]
+
+Like the `quote` keyword but doesn't insert line numbers from the construction
+site. e.g. compare `@q begin end` with `quote end`. Line numbers of interpolated
+expressions are preserverd.
+"""
 macro q(ex)
   Expr(:quote, striplines(ex))
 end
@@ -33,6 +48,8 @@ isline(ex) = isexpr(ex, :line) || isa(ex, LineNumberNode)
     rmlines(x)
 
 Remove the line nodes from a block or array of expressions.
+
+Compare `quote end` vs `rmlines(quote end)`
 """
 rmlines(x) = x
 rmlines(x::Expr) = Expr(x.head, filter(x->!isline(x), x.args)...)
@@ -61,17 +78,50 @@ expressions like `foo{T}` or `Bar{T} <: Vector{T}`.
 namify(s::Symbol) = s
 namify(ex::Expr) = namify(ex.args[1])
 
+"""
+    macroexpand(::Module, expr)
+
+In its uniquely cheeky and loveable fashion, MacroTools extends this function
+to work in any module. May be useful for checking that `esc`s are done
+correctly.
+"""
 Base.macroexpand(m::Module, ex) =
   eval(m, :(macroexpand($(Expr(:quote, ex)))))
 
 walk(x, inner, outer) = outer(x)
 walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
 
+"""
+    postwalk(f, expr)
+
+Applies `f` to each node in the given expression tree, returning the result.
+`f` sees expressions *after* they have been transformed by the walk. See also
+`prewalk`.
+"""
 postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
+
+"""
+    prewalk(f, expr)
+
+Applies `f` to each node in the given expression tree, returning the result.
+`f` sees expressions *before* they have been transformed by the walk, and the
+walk will be applied to whatever `f` returns.
+
+This makes `prewalk` somewhat prone to infinite loops; you probably want to try
+`postwalk` first.
+"""
 prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
 
 replace(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
 
+"""
+    inexpr(expr, x)
+
+Simple expression match; will return `true` if the expression `x` can be found
+inside `expr`.
+
+    inexpr(:(2+2), 2) == true
+"""
 function inexpr(ex, x)
   result = false
   MacroTools.postwalk(ex) do y
@@ -85,6 +135,12 @@ global const animals = split(readstring(joinpath(dirname(@__FILE__), "..", "anim
 isgensym(s::Symbol) = contains(string(s), "#")
 isgensym(s) = false
 
+"""
+    alias_gensyms(expr)
+
+Replaces gensyms with animal names. This makes gensym'd code far easier to
+follow.
+"""
 function alias_gensyms(ex)
   syms = Dict{Symbol, Symbol}()
   s(x) = get!(syms, x, lowercase(rand(filter(s->!(s in values(syms)), animals))))
@@ -165,5 +221,10 @@ function resyntax(ex)
   end
 end
 
+"""
+    prettify(ex)
+
+Makes generated code generaly nicer to look at.
+"""
 prettify(ex; lines = false) =
   ex |> flatten |> unresolve |> resyntax |> alias_gensyms |> (lines ? identity : striplines)
