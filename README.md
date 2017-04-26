@@ -38,6 +38,8 @@ numbers, etc. etc.
 Enter MacroTools:
 
 ```julia
+julia> using MacroTools
+
 julia> @capture(ex, type T_ fields__ end)
 true
 
