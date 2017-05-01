@@ -60,7 +60,7 @@ macro capture(ex, pat)
   bs = allbindings(pat)
   pat = subtb(subor(pat))
   quote
-    $([:($(esc(b)) = nothing) for b in bs]...)
+    $([:($(esc(Expr(:call, :isdefined, QuoteNode(b)))) || ($(esc(b)) = nothing)) for b in bs]...)
     env = trymatch($(Expr(:quote, pat)), $(esc(ex)))
     if env == nothing
       false
