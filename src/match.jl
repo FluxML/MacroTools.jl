@@ -77,7 +77,6 @@ function normalise(ex)
   ex = unblock(ex)
   isexpr(ex, :inert) && (ex = Expr(:quote, ex.args[1]))
   isa(ex, QuoteNode) && (ex = Expr(:quote, ex.value))
-  isexpr(ex, :kw) && (ex = Expr(:(=), ex.args...))
   return ex
 end
 

@@ -206,3 +206,10 @@ macro foo(ex)
   end
 end
 ```
+
+## `:=` vs `:kw`
+
+It's important to keep in mind that when macros are called using
+`@macro(a = b, ...)` syntax, Julia will interpret `=` as `:kw`, but when called
+using `(@macro a = b ...)` syntax, Julia will interpret `=` as `:=`. This is an
+important semantic difference in some cases.

@@ -49,6 +49,6 @@ function destructm(pat, val)
 end
 
 macro destruct(ex)
-  @capture(ex, pat_ = val_) || error("@destruct pat = val")
+  (@capture ex pat_ = val_) || error("@destruct pat = val")
   esc(destructm(pat, val))
 end
