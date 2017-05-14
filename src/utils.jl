@@ -205,7 +205,7 @@ end
 unresolve1(x) = x
 unresolve1(f::Function) = methods(f).mt.name
 
-unresolve(ex::Expr) = prewalk(unresolve1, ex)
+unresolve(ex) = prewalk(unresolve1, ex)
 
 function resyntax(ex)
   prewalk(ex) do x
