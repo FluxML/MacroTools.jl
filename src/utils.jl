@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif, prettify, splitdef, parsearg
+  longdef, shortdef, @expand, makeif, prettify, splitdef, splitarg
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -212,22 +212,22 @@ function splitdef(fdef)
 end
 
 
-""" `parsearg(arg)` matches function arguments (whether from a definition or a function
+""" `splitarg(arg)` matches function arguments (whether from a definition or a function
 call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
 
 ```julia
-> map(parsearg, splitdef(:(f(a=2, x::Int=nothing, y)=x))[:args])
+> map(splitarg, splitdef(:(f(a=2, x::Int=nothing, y)=x))[:args])
 3-element Array{Tuple{Symbol,Symbol,Any},1}:
  (:a, :Any, 2)       
  (:x, :Int, :nothing)
  (:y, :Any, nothing)
 ```
 """
-function parsearg(arg_expr)
+function splitarg(arg_expr)
     if isa(arg_expr, Expr) && arg_expr.head == :kw
         default = arg_expr.args[2]
         arg_expr = arg_expr.args[1]
-        @assert default !== nothing "parsearg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
+        @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
     else
         default = nothing
     end

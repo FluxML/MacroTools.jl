@@ -220,11 +220,11 @@ end
 and returns a `Dict` with keys `:name`, `:args`, `:kwargs` and `:body`. If there is
 a return type in the definition, `:rtype` will be in the dictionary, too. 
 
-`parsearg(arg)` matches function arguments (whether from a definition or a function
+`splitarg(arg)` matches function arguments (whether from a definition or a function
 call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
 
 ```julia
-> map(parsearg, splitdef(:(f(a=2, x::Int=nothing, y)=x))[:args])
+> map(splitarg, splitdef(:(f(a=2, x::Int=nothing, y)=x))[:args])
 3-element Array{Tuple{Symbol,Symbol,Any},1}:
  (:a, :Any, 2)       
  (:x, :Int, :nothing)
