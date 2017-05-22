@@ -209,15 +209,16 @@ end
 
 ## Function definitions
 
-`splitdef(fundef)` matches a function definition such as
+`splitdef(def)` matches a function definition such as
 
 ```julia
 function fname(args; kwargs)::return_type
-   body_block
+   body
 end
 ```
 
-and returns `(fname::Symbol, args::Vector{Any}, kwargs::Vector{Any}, body_block::Expr, return_type)`. `return_type` is `:Any` if not specified.
+and returns a `Dict` with keys `:name`, `:args`, `:kwargs` and `:body`. If there is
+a return type in the definition, `:rtype` will be in the dictionary, too. 
 
 `parsearg(arg)` matches a function argument (whether from a definition, or a funtion
 call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:

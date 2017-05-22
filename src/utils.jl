@@ -193,17 +193,20 @@ Match a function definition such as
 
 ```julia
 function fname(args; kwargs)::return_type
-   body_block
+   body
 end
 ```
 
-and returns `(fname::Symbol, args::Vector{Any}, kwargs::Vector{Any}, body_block::Expr, return_type)`. `return_type` is `:Any` if not specified. """
+and returns a `Dict` with keys `:name`, `:args`, `:kwargs` and `:body`. If there is
+a return type in the definition, `:rtype` will be in the dictionary, too. """
 function splitdef(fdef)
+    mkdict(fname, args, kwargs, body, other_pairs...) =
+        Dict(:name=>fname, :args=>args, :kwargs=>kwargs, :body=>body, other_pairs...)
     @match longdef1(fdef) begin
         (function fname_(args__) body_ end =>
-         (fname, split_kwargs(args)..., body, :Any))
+         mkdict(fname, split_kwargs(args)..., body))
         (function fname_(args__)::rtype_ body_ end =>
-         (fname, split_kwargs(args)..., body, rtype))
+         mkdict(fname, split_kwargs(args)..., body, :rtype=>rtype))
         any_ => error("Not a function definition: $fdef")
     end
 end
