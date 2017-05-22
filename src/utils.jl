@@ -180,17 +180,11 @@ shortdef(ex) = prewalk(shortdef1, ex)
 """ `split_kwargs(x)` splits an argument list into positional and keyword args.
 Returns `(args::Vector, kwargs::Vector)` """
 function split_kwargs(args)
-    positional_args = []
-    kwargs = []
-    for x in args
-        if isa(x, Expr) && x.head == :parameters
-            @assert kwargs == []
-            kwargs = x.args
-        else
-            push!(positional_args, x)
-        end
-    end
-    return (positional_args, kwargs)
+    if !isempty(args) && isa(args[1], Expr) && args[1].head == :parameters
+        return args[2:end], args[1].args
+    else
+        return args, []
+    end    
 end
 
 """    parsedef(fdef)
