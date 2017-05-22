@@ -213,10 +213,11 @@ end
 
 
 """ `splitarg(arg)` matches function arguments (whether from a definition or a function
-call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
+call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. `default` is
+`nothing` when there is none. For example:
 
 ```julia
-> map(splitarg, splitdef(:(f(a=2, x::Int=nothing, y)=x))[:args])
+> map(splitarg, (:(f(a=2, x::Int=nothing, y))).args[2:end])
 3-element Array{Tuple{Symbol,Symbol,Any},1}:
  (:a, :Any, 2)       
  (:x, :Int, :nothing)
@@ -224,19 +225,13 @@ call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For exampl
 ```
 """
 function splitarg(arg_expr)
-    if isa(arg_expr, Expr) && arg_expr.head == :kw
-        default = arg_expr.args[2]
-        arg_expr = arg_expr.args[1]
+    split_var(arg_expr) = (@capture(arg, name_::T_)) ? (name, T) : (arg_expr, :Any)
+    if @capture(arg_expr, arg_ = default_)
         @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
+        return (split_var(arg)..., default)
     else
-        default = nothing
+        return (split_var(arg_expr)..., nothing)
     end
-    if !(@capture(arg_expr, name_::typ_))
-        name = arg_expr
-        typ = :Any
-    end
-    @assert isa(name, Symbol) "Bad function argument: $arg_expr"
-    return (name, typ, default)
 end
 
 
