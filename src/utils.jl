@@ -214,15 +214,22 @@ end
 
 """ `parsearg(arg)` matches function arguments (whether from a definition or a function
 call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
- - `parsearg(splitdef(:(f(x::Int=2)=3))[2][1]) -> (:x, :Int, Nullable(2))`.
- - `parsearg(:x) -> (:x, :Any, Nullable())`
+
+```julia
+> map(parsearg, splitdef(:(f(a=2, x::Int=nothing, y)=x))[:args])
+3-element Array{Tuple{Symbol,Symbol,Any},1}:
+ (:a, :Any, 2)       
+ (:x, :Int, :nothing)
+ (:y, :Any, nothing)
+```
 """
 function parsearg(arg_expr)
     if isa(arg_expr, Expr) && arg_expr.head == :kw
-        default = Nullable(arg_expr.args[2])
+        default = arg_expr.args[2]
         arg_expr = arg_expr.args[1]
+        @assert default !== nothing "parsearg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
     else
-        default = Nullable()
+        default = nothing
     end
     if !(@capture(arg_expr, name_::typ_))
         name = arg_expr

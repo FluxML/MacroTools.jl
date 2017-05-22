@@ -96,9 +96,8 @@ let
         Dict(:name=>:foo, :args=>[:a, Expr(:kw, :(b::Int), 2)],
              :kwargs=>[Expr(:kw, :c, 3)],
              :body=>MacroTools.striplines(quote a+b end), :rtype=>:Int)
-    # == isn't defined on Nullables
-    @test map(arg->parsearg(arg)[1:2], def_elts[:args]) == [(:a, :Any), (:b, :Int)]
-    @test isnull(parsearg(def_elts[:args][1])[3])
+    @test map(arg->parsearg(arg), def_elts[:args]) == [(:a, :Any, nothing), (:b, :Int, 2)]
+    @test parsearg(def_elts[:args][1])[3] === nothing
 end
 
 include("destruct.jl")
