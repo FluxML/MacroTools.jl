@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif, prettify, parsedef, parsearg
+  longdef, shortdef, @expand, makeif, prettify, splitdef, parsearg
 
 assoc!(d, k, v) = (d[k] = v; d)
 
@@ -187,7 +187,7 @@ function split_kwargs(args)
     end    
 end
 
-"""    parsedef(fdef)
+"""    splitdef(fdef)
 
 Match a function definition such as
 
@@ -198,7 +198,7 @@ end
 ```
 
 and returns `(fname::Symbol, args::Vector{Any}, kwargs::Vector{Any}, body_block::Expr, return_type)`. `return_type` is `:Any` if not specified. """
-function parsedef(fdef)
+function splitdef(fdef)
     @match longdef1(fdef) begin
         (function fname_(args__) body_ end =>
          (fname, split_kwargs(args)..., body, :Any))
@@ -211,7 +211,7 @@ end
 
 """ `parsearg(arg)` matches function arguments (whether from a definition or a function
 call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. For example:
- - `parsearg(parsedef(:(f(x::Int=2)=3))[2][1]) -> (:x, :Int, Nullable(2))`.
+ - `parsearg(splitdef(:(f(x::Int=2)=3))[2][1]) -> (:x, :Int, Nullable(2))`.
  - `parsearg(:x) -> (:x, :Any, Nullable())`
 """
 function parsearg(arg_expr)
