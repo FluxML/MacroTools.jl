@@ -225,7 +225,7 @@ call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. `default` 
 ```
 """
 function splitarg(arg_expr)
-    split_var(arg_expr) = (@capture(arg, name_::T_)) ? (name, T) : (arg_expr, :Any)
+    split_var(arg) = (@capture(arg, name_::T_)) ? (name, T) : (arg, :Any)
     if @capture(arg_expr, arg_ = default_)
         @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
         return (split_var(arg)..., default)
