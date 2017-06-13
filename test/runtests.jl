@@ -82,4 +82,8 @@ let
   @test isexpr(x, :kw)
 end
 
+macro nothing_macro()
+end
+@test @expand(@nothing_macro) === nothing
+
 include("destruct.jl")
