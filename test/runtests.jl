@@ -82,4 +82,48 @@ let
   @test isexpr(x, :kw)
 end
 
+let
+  ex = :(x[1])
+  @test @match(ex, begin
+    v_ref => v
+  end) == ex
+
+  @test @match(ex, begin
+    v_call => v
+  end) === nothing
+
+  @test @match(:(x(1)), begin
+    v_call => v
+  end) == :(x(1))
+
+  @test @match(:(x(1)), begin
+    v_ref => v
+  end) === nothing
+
+  @test @match(ex, begin
+    (v_ref | 
+     (v_ref <= ub_)) => (v, ub)
+  end) == (ex, nothing)
+
+  @test @match(:(x <= 2), begin
+    (v_ref | 
+     (v_ref <= ub_)) => (v, ub)
+  end) == nothing
+
+  @test @match(:(x(3) <= 2), begin
+    (v_call | 
+     (v_ref <= ub_)) => (v, ub)
+  end) == (:(x(3) <= 2), nothing)  # only the first pattern matches
+
+  @test @match(:(x(3) <= 2), begin
+    ((v_ref <= ub_) |
+     v_call ) => (v, ub)
+  end) == (:(x(3) <= 2), nothing)
+
+  @test @match(:(x[1] <= 2), begin
+    (v_ref | 
+     (v_ref <= ub_)) => (v, ub)
+  end) == (:(x[1]), :(2))
+end
+
 include("destruct.jl")
