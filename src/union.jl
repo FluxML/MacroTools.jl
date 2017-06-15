@@ -15,7 +15,7 @@ isor(ex) = isexpr(ex, :call) && ex.args[1] in (:or_, :|)
 
 function ornew(ex)
   isor(ex) || return ex
-  or_(ex.args[2:end]...)
+  Expr(:$, :(MacroTools.or_($(map(ex -> Expr(:quote, ex), ex.args[2:end])...))))
 end
 
 subor(s) = s
