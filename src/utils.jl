@@ -78,16 +78,6 @@ expressions like `foo{T}` or `Bar{T} <: Vector{T}`.
 namify(s::Symbol) = s
 namify(ex::Expr) = namify(ex.args[1])
 
-"""
-    macroexpand(::Module, expr)
-
-In its uniquely cheeky and loveable fashion, MacroTools extends this function
-to work in any module. May be useful for checking that `esc`s are done
-correctly.
-"""
-Base.macroexpand(m::Module, ex) =
-  eval(m, :(macroexpand($(Expr(:quote, ex)))))
-
 walk(x, inner, outer) = outer(x)
 walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
 
@@ -155,7 +145,8 @@ More convenient macro expansion, e.g.
     @expand @time foo()
 """
 macro expand(ex)
-  :(alias_gensyms(macroexpand($(ex,)[1])))
+    :(alias_gensyms(macroexpand($(@static isdefined(Base, Symbol("@__MODULE__")) ?
+                                  __module__ : current_module()), $(ex,)[1])))
 end
 
 "Test for function definition expressions."
