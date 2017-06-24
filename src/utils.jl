@@ -202,13 +202,17 @@ a return type in the definition, `:rtype` will be in the dictionary, too. """
 function splitdef(fdef)
     mkdict(fname, args, kwargs, body, other_pairs...) =
         Dict(:name=>fname, :args=>args, :kwargs=>kwargs, :body=>body, other_pairs...)
-    @match longdef1(fdef) begin
-        (function fname_(args__) body_ end =>
-         mkdict(fname, splitkwargs(args)..., body))
-        (function fname_(args__)::rtype_ body_ end =>
-         mkdict(fname, splitkwargs(args)..., body, :rtype=>rtype))
-        any_ => error("Not a function definition: $fdef")
+    error_msg = "Not a function definition: $fdef"
+    @assert(@capture(longdef1(fdef),
+                     function ((fname_(allargs__)) | (fname_(allargs__)::rtype_))
+                     body_ end),
+            error_msg)
+    args, kwargs = splitkwargs(allargs)
+    di = Dict(:name=>fname, :args=>args, :kwargs=>kwargs, :body=>body)
+    if rtype != nothing
+        di[:rtype] = rtype
     end
+    di
 end
 
 

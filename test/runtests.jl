@@ -91,11 +91,11 @@ let
     # but it fails because of :line and :block differences
     @test longdef(:(f(x)::Int = 10)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
-    def_elts = splitdef(:(foo(a, b::Int=2; c=3)::Int = a+b))
+    def_elts = splitdef(MacroTools.striplines(:(foo(a, b::Int=2; c=3)::Int = a+b)))
     @test def_elts ==
         Dict(:name=>:foo, :args=>[:a, Expr(:kw, :(b::Int), 2)],
              :kwargs=>[Expr(:kw, :c, 3)],
-             :body=>MacroTools.striplines(quote a+b end), :rtype=>:Int)
+             :body=>MacroTools.striplines(quote begin a+b end end), :rtype=>:Int)
     @test map(splitarg, def_elts[:args]) == [(:a, :Any, nothing), (:b, :Int, 2)]
     @test splitarg(def_elts[:args][1])[3] === nothing
     @test map(splitarg, (:(f(a=2, x::Int=nothing, y))).args[2:end]) ==
