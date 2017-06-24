@@ -177,9 +177,9 @@ function shortdef1(ex)
 end
 shortdef(ex) = prewalk(shortdef1, ex)
 
-""" `split_kwargs(x)` splits an argument list into positional and keyword args.
+""" `splitkwargs(x)` splits an argument list into positional and keyword args.
 Returns `(args::Vector, kwargs::Vector)` """
-function split_kwargs(args)
+function splitkwargs(args)
     if !isempty(args) && isa(args[1], Expr) && args[1].head == :parameters
         return args[2:end], args[1].args
     else
@@ -204,9 +204,9 @@ function splitdef(fdef)
         Dict(:name=>fname, :args=>args, :kwargs=>kwargs, :body=>body, other_pairs...)
     @match longdef1(fdef) begin
         (function fname_(args__) body_ end =>
-         mkdict(fname, split_kwargs(args)..., body))
+         mkdict(fname, splitkwargs(args)..., body))
         (function fname_(args__)::rtype_ body_ end =>
-         mkdict(fname, split_kwargs(args)..., body, :rtype=>rtype))
+         mkdict(fname, splitkwargs(args)..., body, :rtype=>rtype))
         any_ => error("Not a function definition: $fdef")
     end
 end
