@@ -209,16 +209,24 @@ end
 
 ## Function definitions
 
-`splitdef(def)` matches a function definition such as
+`splitdef(def)` matches a function definition of the form
 
 ```julia
-function fname(args; kwargs)::return_type
+function name{params}(args; kwargs)::rtype where {whereparams}
    body
 end
-```
 
-and returns a `Dict` with keys `:name`, `:args`, `:kwargs` and `:body`. If there is
-a return type in the definition, `:rtype` will be in the dictionary, too. 
+and returns `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
+calling `MacroTools.combinedef(dict)`, or explicitly with
+
+```julia
+rtype = get(dict, :rtype, :Any)
+all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
+:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
+                                            $(dict[:kwargs]...))::$rtype
+      $(dict[:body])
+  end)
+```
 
 `splitarg(arg)` matches function arguments (whether from a definition or a function call)
 such as `x::Int=2` and returns `(arg_name, arg_type, default)`. `default` is `nothing`

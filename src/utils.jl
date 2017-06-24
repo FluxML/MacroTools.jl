@@ -154,13 +154,26 @@ isdef(ex) = ismatch(or_(:(function _(__) _ end),
                         :(f_(__) = _)),
                     ex)
 
+if VERSION >= v"0.6.0"
+    include("utilsv6.jl")
+else
+    longdef1_where(ex) = ex
+    function splitwhere(fdef)
+        @assert(@capture(longdef1(fdef),
+                         function (fcall_ | fcall_)
+                         body_ end),
+                "Not a function definition: $fdef")
+        return fcall, body, nothing
+    end
+end
+
 function longdef1(ex)
   @match ex begin
     (f_(args__) = body_) => @q function $f($(args...)) $body end
     (f_(args__)::rtype_ = body_) => @q function $f($(args...))::$rtype $body end
     ((args__,) -> body_) => @q function ($(args...),) $body end
     (arg_ -> body_) => @q function ($arg,) $body end
-    _ => ex
+    _ => longdef1_where(ex)
   end
 end
 longdef(ex) = prewalk(longdef1, ex)
@@ -177,48 +190,75 @@ function shortdef1(ex)
 end
 shortdef(ex) = prewalk(shortdef1, ex)
 
-""" `splitkwargs(x)` splits an argument list into positional and keyword args.
-Returns `(args::Vector, kwargs::Vector)` """
-function splitkwargs(args)
-    if !isempty(args) && isa(args[1], Expr) && args[1].head == :parameters
-        return args[2:end], args[1].args
-    else
-        return args, []
-    end    
-end
+doc"""    splitdef(fdef)
 
-"""    splitdef(fdef)
-
-Match a function definition such as
+Match any function definition
 
 ```julia
-function fname(args; kwargs)::return_type
+function name{params}(args; kwargs)::rtype where {whereparams}
    body
 end
 ```
 
-and returns a `Dict` with keys `:name`, `:args`, `:kwargs` and `:body`. If there is
-a return type in the definition, `:rtype` will be in the dictionary, too. """
+and return `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
+calling `MacroTools.combinedef(dict)`, or explicitly with
+
+```
+rtype = get(dict, :rtype, :Any)
+all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
+:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
+                                            $(dict[:kwargs]...))::$rtype
+      $(dict[:body])
+  end)
+```
+"""
 function splitdef(fdef)
-    mkdict(fname, args, kwargs, body, other_pairs...) =
-        Dict(:name=>fname, :args=>args, :kwargs=>kwargs, :body=>body, other_pairs...)
     error_msg = "Not a function definition: $fdef"
-    @assert(@capture(longdef1(fdef),
-                     function ((fname_(allargs__)) | (fname_(allargs__)::rtype_))
-                     body_ end),
+    fcall, body, whereparams = splitwhere(fdef)
+    @assert(@capture(fcall, ((func_(args__; kwargs__)) |
+                             (func_(args__; kwargs__)::rtype_) |
+                             (func_(args__)) |
+                             (func_(args__)::rtype_))),
             error_msg)
-    args, kwargs = splitkwargs(allargs)
-    di = Dict(:name=>fname, :args=>args, :kwargs=>kwargs, :body=>body)
-    if rtype != nothing
-        di[:rtype] = rtype
-    end
+    @assert(@capture(func, (fname_{params__} | fname_)), error_msg)
+    di = Dict(:name=>fname, :args=>args,
+              :kwargs=>(kwargs===nothing ? [] : kwargs), :body=>body)
+    if rtype !== nothing; di[:rtype] = rtype end
+    if whereparams !== nothing; di[:whereparams] = whereparams end
+    if params !== nothing; di[:params] = params end
     di
 end
 
 
-""" `splitarg(arg)` matches function arguments (whether from a definition or a function
-call) such as `x::Int=2` and returns `(arg_name, arg_type, default)`. `default` is
-`nothing` when there is none. For example:
+"""
+    combinedef(dict::Dict)
+
+`combinedef` is the inverse of `splitdef`. It takes a splitdef-like dict
+and returns a function definition. """
+function combinedef(dict::Dict)
+    rtype = get(dict, :rtype, :Any)
+    # We have to combine params and whereparams because f{}() where {} = 0 is
+    # a syntax error unless as a constructor.
+    all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
+    :(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
+                                                $(dict[:kwargs]...))::$rtype
+          $(dict[:body])
+      end)
+end
+
+
+macro splitcombine(fundef)
+    dict = splitdef(fundef)
+    esc(rebuilddef(striplines(dict)))
+end
+
+
+"""
+    splitarg(arg)
+
+Match function arguments (whether from a definition or a function call) such as
+`x::Int=2` and return `(arg_name, arg_type, default)`. `default` is `nothing`
+when there is none. For example:
 
 ```julia
 > map(splitarg, (:(f(a=2, x::Int=nothing, y))).args[2:end])

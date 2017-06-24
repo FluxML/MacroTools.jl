@@ -86,21 +86,32 @@ macro nothing_macro()
 end
 @test @expand(@nothing_macro) === nothing
 
+macro splitcombine(fundef) # should be a no-op
+    dict = splitdef(fundef)
+    esc(MacroTools.combinedef(dict))
+end
+
 let
     # Ideally we'd compare the result against :(function f(x)::Int 10 end),
     # but it fails because of :line and :block differences
     @test longdef(:(f(x)::Int = 10)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
-    def_elts = splitdef(MacroTools.striplines(:(foo(a, b::Int=2; c=3)::Int = a+b)))
-    @test def_elts ==
-        Dict(:name=>:foo, :args=>[:a, Expr(:kw, :(b::Int), 2)],
-             :kwargs=>[Expr(:kw, :c, 3)],
-             :body=>MacroTools.striplines(quote begin a+b end end), :rtype=>:Int)
-    @test map(splitarg, def_elts[:args]) == [(:a, :Any, nothing), (:b, :Int, 2)]
-    @test splitarg(def_elts[:args][1])[3] === nothing
     @test map(splitarg, (:(f(a=2, x::Int=nothing, y))).args[2:end]) ==
         [(:a, :Any, 2), (:x, :Int, :nothing), (:y, :Any, nothing)]
     @test splitarg(:(::Int)) == (nothing, :Int, nothing)
+
+    @splitcombine foo(x) = x+2
+    @test foo(10) == 12
+    @splitcombine add(a, b=2; c=3, d=4)::Float64 = a+b+c+d
+    @test add(1; d=10) === 16.0
+    @splitcombine fparam{T}(a::T) = T
+    @test fparam([]) == Vector{Any}
+    if VERSION >= v"0.6.0"
+        include_string("""
+        @splitcombine fwhere(a::T) where T = T
+        @test fwhere(10) == Int
+        """)
+    end
 end
 
 include("destruct.jl")
