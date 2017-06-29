@@ -257,29 +257,31 @@ end
     splitarg(arg)
 
 Match function arguments (whether from a definition or a function call) such as
-`x::Int=2` and return `(arg_name, arg_type, default)`. `default` is `nothing`
-when there is none. For example:
+`x::Int=2` and return `(arg_name, arg_type, is_splat, default)`. `arg_name` and
+`default` are `nothing` when they are absent. For example:
 
 ```julia
-> map(splitarg, (:(f(a=2, x::Int=nothing, y))).args[2:end])
-3-element Array{Tuple{Symbol,Symbol,Any},1}:
- (:a, :Any, 2)       
- (:x, :Int, :nothing)
- (:y, :Any, nothing)
+> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
+4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
+ (:a, :Any, false, 2)        
+ (:x, :Int, false, :nothing) 
+ (:y, :Any, false, nothing)  
+ (:args, :Any, true, nothing)
 ```
 """
 function splitarg(arg_expr)
-    split_var(arg) =
+    splitvar(arg) =
         @match arg begin
             ::T_ => (nothing, T)
-            name_::T_ => (name, T)
-            x_ => (arg, :Any)
+            name_::T_ => (name::Symbol, T)
+            x_ => (x::Symbol, :Any)
         end
-    if @capture(arg_expr, arg_ = default_)
+    (is_splat = @capture(arg_expr, arg_expr2_...)) || (arg_expr2 = arg_expr)
+    if @capture(arg_expr2, arg_ = default_)
         @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
-        return (split_var(arg)..., default)
+        return (splitvar(arg)..., is_splat, default)
     else
-        return (split_var(arg_expr)..., nothing)
+        return (splitvar(arg_expr2)..., is_splat, nothing)
     end
 end
 

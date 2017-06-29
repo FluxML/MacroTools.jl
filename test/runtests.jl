@@ -96,9 +96,10 @@ let
     # but it fails because of :line and :block differences
     @test longdef(:(f(x)::Int = 10)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
-    @test map(splitarg, (:(f(a=2, x::Int=nothing, y))).args[2:end]) ==
-        [(:a, :Any, 2), (:x, :Int, :nothing), (:y, :Any, nothing)]
-    @test splitarg(:(::Int)) == (nothing, :Int, nothing)
+    @test map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end]) ==
+        [(:a, :Any, false, 2), (:x, :Int, false, :nothing),
+         (:y, :Any, false, nothing), (:args, :Any, true, nothing)]
+    @test splitarg(:(::Int)) == (nothing, :Int, false, nothing)
 
     @splitcombine foo(x) = x+2
     @test foo(10) == 12
