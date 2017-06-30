@@ -107,6 +107,9 @@ let
     @test add(1; d=10) === 16.0
     @splitcombine fparam{T}(a::T) = T
     @test fparam([]) == Vector{Any}
+    immutable Orange end
+    @splitcombine (::Orange)(x) = x+2
+    @test Orange()(10) == 12
     if VERSION >= v"0.6.0"
         include_string("""
         @splitcombine fwhere(a::T) where T = T
