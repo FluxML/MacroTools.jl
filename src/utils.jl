@@ -184,7 +184,8 @@ function flatten1(ex)
   for x in ex.args
     isexpr(x, :block) ? append!(ex′.args, x.args) : push!(ex′.args, x)
   end
-  return ex′
+  # Don't use `unblock` to preserve line nos
+  return length(ex′.args) == 1 ? ex′.args[1] : ex′
 end
 
 flatten(ex) = postwalk(flatten1, ex)
@@ -218,4 +219,4 @@ end
 Makes generated code generaly nicer to look at.
 """
 prettify(ex; lines = false) =
-  ex |> flatten |> unresolve |> resyntax |> alias_gensyms |> (lines ? identity : striplines)
+  ex |> (lines ? identity : striplines) |> flatten |> unresolve |> resyntax |> alias_gensyms
