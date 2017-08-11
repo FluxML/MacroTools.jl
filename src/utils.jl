@@ -154,19 +154,20 @@ isdef(ex) = ismatch(or_(:(function _(__) _ end),
                         :(f_(__) = _)),
                     ex)
 
+isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
+                  (@capture(fcall, (f_(args__) |
+                                    f_(args__)::rtype_)) ||
+                   # This catches f(...) where T where U
+                   (@capture(fcall, fcall2_ where _) && isshortdef(:($fcall2 = $body)))))
+
 function longdef1(ex)
-  @match ex begin
-    (f_(args__) = body_) => @q function $f($(args...)) $body end
-    (f_(args__)::rtype_ = body_) => @q function $f($(args...))::$rtype $body end
-    ((args__,) -> body_) => @q function ($(args...),) $body end
-    (arg_ -> body_) => @q function ($arg,) $body end
-    (f_(args__) where {whereparams__} = body_) =>
-        @q function $f($(args...)) where {$(whereparams...)}
-            $body end
-    ((f_(args__)::rtype_) where {whereparams__} = body_) =>
-        @q function ($f($(args...))::$rtype) where {$(whereparams...)}
-            $body end
-    _ => ex
+  if @capture(ex, (arg_ -> body_))
+    @q function ($arg,) $body end
+  elseif isshortdef(ex)
+    @assert @capture(ex, (fcall_ = body_))
+    striplines(Expr(:function, fcall, body))
+  else
+    ex
   end
 end
 longdef(ex) = prewalk(longdef1, ex)
