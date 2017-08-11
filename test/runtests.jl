@@ -86,4 +86,32 @@ macro nothing_macro()
 end
 @test @expand(@nothing_macro) === nothing
 
+macro splitcombine(fundef) # should be a no-op
+    dict = splitdef(fundef)
+    esc(MacroTools.combinedef(dict))
+end
+
+let
+    # Ideally we'd compare the result against :(function f(x)::Int 10 end),
+    # but it fails because of :line and :block differences
+    @test longdef(:(f(x)::Int = 10)).head == :function
+    @test shortdef(:(function f(x)::Int 10 end)).head != :function
+    @test map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end]) ==
+        [(:a, :Any, false, 2), (:x, :Int, false, :nothing),
+         (:y, :Any, false, nothing), (:args, :Any, true, nothing)]
+    @test splitarg(:(::Int)) == (nothing, :Int, false, nothing)
+
+    @splitcombine foo(x) = x+2
+    @test foo(10) == 12
+    @splitcombine add(a, b=2; c=3, d=4)::Float64 = a+b+c+d
+    @test add(1; d=10) === 16.0
+    @splitcombine fparam{T}(a::T) = T
+    @test fparam([]) == Vector{Any}
+    immutable Orange end
+    @splitcombine (::Orange)(x) = x+2
+    @test Orange()(10) == 12
+    @splitcombine fwhere(a::T) where T = T
+    @test fwhere(10) == Int
+end
+
 include("destruct.jl")
