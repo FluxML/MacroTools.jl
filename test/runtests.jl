@@ -110,12 +110,8 @@ let
     immutable Orange end
     @splitcombine (::Orange)(x) = x+2
     @test Orange()(10) == 12
-    if VERSION >= v"0.6.0"
-        include_string("""
-        @splitcombine fwhere(a::T) where T = T
-        @test fwhere(10) == Int
-        """)
-    end
+    @splitcombine fwhere(a::T) where T = T
+    @test fwhere(10) == Int
 end
 
 include("destruct.jl")

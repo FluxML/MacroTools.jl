@@ -154,26 +154,19 @@ isdef(ex) = ismatch(or_(:(function _(__) _ end),
                         :(f_(__) = _)),
                     ex)
 
-if VERSION >= v"0.6.0"
-    include("utilsv6.jl")
-else
-    longdef1_where(ex) = ex
-    function splitwhere(fdef)
-        @assert(@capture(longdef1(fdef),
-                         function (fcall_ | fcall_)
-                         body_ end),
-                "Not a function definition: $fdef")
-        return fcall, body, nothing
-    end
-end
-
 function longdef1(ex)
   @match ex begin
     (f_(args__) = body_) => @q function $f($(args...)) $body end
     (f_(args__)::rtype_ = body_) => @q function $f($(args...))::$rtype $body end
     ((args__,) -> body_) => @q function ($(args...),) $body end
     (arg_ -> body_) => @q function ($arg,) $body end
-    _ => longdef1_where(ex)
+    (f_(args__) where {whereparams__} = body_) =>
+        @q function $f($(args...)) where {$(whereparams...)}
+            $body end
+    ((f_(args__)::rtype_) where {whereparams__} = body_) =>
+        @q function ($f($(args...))::$rtype) where {$(whereparams...)}
+            $body end
+    _ => ex
   end
 end
 longdef(ex) = prewalk(longdef1, ex)
@@ -214,7 +207,10 @@ all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
 """
 function splitdef(fdef)
     error_msg = "Not a function definition: $fdef"
-    fcall, body, whereparams = splitwhere(fdef)
+    @assert(@capture(longdef1(fdef),
+                     function ((fcall_ where {whereparams__}) | fcall_)
+                     body_ end),
+            error_msg)
     @assert(@capture(fcall, ((func_(args__; kwargs__)) |
                              (func_(args__; kwargs__)::rtype_) |
                              (func_(args__)) |
@@ -273,9 +269,9 @@ Match function arguments (whether from a definition or a function call) such as
 ```julia
 > map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
- (:a, :Any, false, 2)        
- (:x, :Int, false, :nothing) 
- (:y, :Any, false, nothing)  
+ (:a, :Any, false, 2)
+ (:x, :Int, false, :nothing)
+ (:y, :Any, false, nothing)
  (:args, :Any, true, nothing)
 ```
 """
