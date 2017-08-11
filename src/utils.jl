@@ -240,17 +240,27 @@ end
 """
     combinedef(dict::Dict)
 
-`combinedef` is the inverse of `splitdef`. It takes a splitdef-like dict
+`combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
 and returns a function definition. """
 function combinedef(dict::Dict)
-    rtype = get(dict, :rtype, :Any)
-    # We have to combine params and whereparams because f{}() where {} = 0 is
-    # a syntax error unless as a constructor.
-    all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-    :(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                                $(dict[:kwargs]...))::$rtype
-          $(dict[:body])
+  rtype = get(dict, :rtype, :Any)
+  params = get(dict, :params, [])
+  wparams = get(dict, :whereparams, [])
+  name = dict[:name]
+  name_param = isempty(params) ? name : :($name{$(params...)})
+  # We need the `if` to handle parametric inner/outer constructors like
+  # SomeType{X}(x::X) where X = SomeType{X}(x, x+2)
+  if isempty(wparams)
+    :(function $name_param($(dict[:args]...);
+                           $(dict[:kwargs]...))::$rtype
+      $(dict[:body])
       end)
+  else
+    :(function $name_param($(dict[:args]...);
+                           $(dict[:kwargs]...))::$rtype where {$(wparams...)}
+      $(dict[:body])
+      end)
+  end
 end
 
 """

@@ -108,11 +108,21 @@ let
     @test add(1; d=10) === 16.0
     @splitcombine fparam{T}(a::T) = T
     @test fparam([]) == Vector{Any}
-    immutable Orange end
+    struct Orange end
     @splitcombine (::Orange)(x) = x+2
     @test Orange()(10) == 12
     @splitcombine fwhere(a::T) where T = T
     @test fwhere(10) == Int
+    @splitcombine manywhere(x::T, y::Vector{U}) where T <: U where U = (T, U)
+    @test manywhere(1, Number[2.0]) == (Int, Number)
+
+    struct Foo{A, B}
+        a::A
+        b::B
+    end
+    # Parametric outer constructor
+    @splitcombine Foo{A}(a::A) where A = Foo{A, A}(a,a)
+    @test Foo{Int}(2) == Foo{Int, Int}(2, 2)
 end
 
 include("destruct.jl")
