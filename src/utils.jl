@@ -155,10 +155,9 @@ isdef(ex) = ismatch(or_(:(function _(__) _ end),
                     ex)
 
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
-                  (@capture(fcall, (f_(args__) |
-                                    f_(args__)::rtype_)) ||
-                   # This catches f(...) where T where U
-                   (@capture(fcall, fcall2_ where _) && isshortdef(:($fcall2 = $body)))))
+                  (@capture(gatherwheres(fcall)[1],
+                            (f_(args__) |
+                             f_(args__)::rtype_))))
 
 function longdef1(ex)
   if @capture(ex, (arg_ -> body_))
@@ -184,11 +183,11 @@ function shortdef1(ex)
 end
 shortdef(ex) = prewalk(shortdef1, ex)
 
-""" `gather_wheres(:(f(x::T, y::U) where T where U)) => (:(f(x::T, y::U)), (:U, :T))`
+""" `gatherwheres(:(f(x::T, y::U) where T where U)) => (:(f(x::T, y::U)), (:U, :T))`
 """
-function gather_wheres(ex)
+function gatherwheres(ex)
   if @capture(ex, (f_ where {params1__}))
-    f2, params2 = gather_wheres(f)
+    f2, params2 = gatherwheres(f)
     (f2, (params1..., params2...))
   else
     (ex, ())
@@ -222,7 +221,7 @@ function splitdef(fdef)
   @assert(@capture(longdef1(fdef),
                    function (fcall_ | fcall_) body_ end),
           "Not a function definition: $fdef")
-  fcall_nowhere, whereparams = gather_wheres(fcall)
+  fcall_nowhere, whereparams = gatherwheres(fcall)
   @assert(@capture(fcall_nowhere, ((func_(args__; kwargs__)) |
                                    (func_(args__; kwargs__)::rtype_) |
                                    (func_(args__)) |
