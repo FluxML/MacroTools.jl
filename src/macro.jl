@@ -1,21 +1,22 @@
-allbindings(pat, bs) =
-  isbinding(pat) || (isslurp(pat) && pat ≠ :__) ? push!(bs, bname(pat)) :
+function allbindings(pat, bs)
+  if isa(pat, QuoteNode)
+    return allbindings(pat.value, bs)
+  end
+  return isbinding(pat) || (isslurp(pat) && pat ≠ :__) ? push!(bs, bname(pat)) :
   isa(pat, TypeBind) ? push!(bs, pat.name) :
   isa(pat, OrBind) ? (allbindings(pat.pat1, bs); allbindings(pat.pat2, bs)) :
   istb(pat) ? push!(bs, tbname(pat)) :
   isexpr(pat, :$) ? bs :
   isa(pat, Expr) ? map(pat -> allbindings(pat, bs), [pat.head, pat.args...]) :
   bs
+end
 
 allbindings(pat) = (bs = Any[]; allbindings(pat, bs); bs)
 
 function bindinglet(bs, body)
-  ex = :(let $(esc(:env)) = env
+  ex = :(let $(esc(:env)) = env, $((:($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)) for b in bs)...)
            $body
          end)
-  for b in bs
-    push!(ex.args, :($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)))
-  end
   return ex
 end
 

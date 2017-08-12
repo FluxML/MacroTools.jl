@@ -120,7 +120,7 @@ function inexpr(ex, x)
   return result
 end
 
-global const animals = split(readstring(joinpath(dirname(@__FILE__), "..", "animals.txt")))
+const animals = split(read(joinpath(dirname(@__FILE__), "..", "animals.txt"), String))
 
 isgensym(s::Symbol) = contains(string(s), "#")
 isgensym(s) = false
@@ -140,7 +140,7 @@ function alias_gensyms(ex)
 end
 
 # Helper function, from Compat. Use Base.macroexpand in 0.7
-macroexpandmodule(mod::Module, x::ANY) = eval(mod, :(macroexpand($(QuoteNode(x)))))
+macroexpandmodule(mod::Module, @nospecialize(x)) = eval(mod, :(macroexpand($(QuoteNode(x)))))
 
 """
 More convenient macro expansion, e.g.
