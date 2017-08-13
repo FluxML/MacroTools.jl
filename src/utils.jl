@@ -139,14 +139,18 @@ function alias_gensyms(ex)
   end
 end
 
+# Helper function, from Compat. Use Base.macroexpand in 0.7
+macroexpandmodule(mod::Module, x::ANY) = eval(mod, :(macroexpand($(QuoteNode(x)))))
+
 """
 More convenient macro expansion, e.g.
 
     @expand @time foo()
 """
 macro expand(ex)
-    :(alias_gensyms(macroexpand($(@static isdefined(Base, Symbol("@__MODULE__")) ?
-                                  __module__ : current_module()), $(ex,)[1])))
+  :(alias_gensyms(macroexpandmodule($(@static isdefined(Base, Symbol("@__MODULE__")) ?
+                                      __module__ : current_module()),
+                                    $(ex,)[1])))
 end
 
 "Test for function definition expressions."
