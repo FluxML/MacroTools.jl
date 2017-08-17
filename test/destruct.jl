@@ -10,7 +10,7 @@ d = @destruct [a, b] = Dict(:a => 1, :b => 2)
 
 import Base: ==
 
-immutable S
+struct S
     data::Vector{UInt8}
     S(s) = new(Vector{UInt8}(s))
 end

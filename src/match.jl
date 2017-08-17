@@ -1,4 +1,4 @@
-type MatchError
+mutable struct MatchError
   pat
   ex
 end

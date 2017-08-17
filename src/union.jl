@@ -1,4 +1,4 @@
-immutable OrBind
+struct OrBind
   pat1
   pat2
 end

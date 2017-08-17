@@ -35,7 +35,7 @@ let
 end
 
 let
-  ex = :(type Foo
+  ex = :(mutable struct Foo
            x::Int
            y
          end)
@@ -105,9 +105,9 @@ let
     @test foo(10) == 12
     @splitcombine add(a, b=2; c=3, d=4)::Float64 = a+b+c+d
     @test add(1; d=10) === 16.0
-    @splitcombine fparam{T}(a::T) = T
+    @splitcombine fparam(a::T) where {T} = T
     @test fparam([]) == Vector{Any}
-    immutable Orange end
+    struct Orange end
     @splitcombine (::Orange)(x) = x+2
     @test Orange()(10) == 12
     @splitcombine fwhere(a::T) where T = T
