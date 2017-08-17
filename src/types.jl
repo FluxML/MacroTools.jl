@@ -1,4 +1,4 @@
-immutable TypeBind
+struct TypeBind
   name::Symbol
   ts::Set{Any}
 end
