@@ -10,19 +10,10 @@ allbindings(pat, bs) =
 allbindings(pat) = (bs = Any[]; allbindings(pat, bs); bs)
 
 function bindinglet(bs, body)
-  # The extra unassigned gensym entices the parser to make ex.args[1] an
-  # Expr(:block,...) from the outset in v0.7.
-  ex = :(let $(gensym()), $(esc(:env)) = env
+  asgn = Expr[:($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)) for b in bs]
+  ex = :(let $(esc(:env)) = env, $(asgn...)
            $body
          end)
-  for b in bs
-    asgn = :($(esc(b)) = get(env, $(Expr(:quote, b)), nothing))
-    @static if VERSION ≥ v"0.7.0-DEV.1671"
-      push!(ex.args[1].args, asgn)
-    else
-      push!(ex.args, asgn)
-    end
-  end
   return ex
 end
 
