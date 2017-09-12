@@ -10,12 +10,10 @@ allbindings(pat, bs) =
 allbindings(pat) = (bs = Any[]; allbindings(pat, bs); bs)
 
 function bindinglet(bs, body)
-  ex = :(let $(esc(:env)) = env
+  asgn = Expr[:($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)) for b in bs]
+  ex = :(let $(esc(:env)) = env, $(asgn...)
            $body
          end)
-  for b in bs
-    push!(ex.args, :($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)))
-  end
   return ex
 end
 
