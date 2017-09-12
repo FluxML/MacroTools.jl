@@ -95,6 +95,7 @@ let
     # Ideally we'd compare the result against :(function f(x)::Int 10 end),
     # but it fails because of :line and :block differences
     @test longdef(:(f(x)::Int = 10)).head == :function
+    @test longdef(:(f(x::T) where U where T = 2)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
     @test map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end]) ==
         [(:a, :Any, false, 2), (:x, :Int, false, :nothing),
@@ -112,6 +113,16 @@ let
     @test Orange()(10) == 12
     @splitcombine fwhere(a::T) where T = T
     @test fwhere(10) == Int
+    @splitcombine manywhere(x::T, y::Vector{U}) where T <: U where U = (T, U)
+    @test manywhere(1, Number[2.0]) == (Int, Number)
+
+    struct Foo{A, B}
+        a::A
+        b::B
+    end
+    # Parametric outer constructor
+    @splitcombine Foo{A}(a::A) where A = Foo{A, A}(a,a)
+    @test Foo{Int}(2) == Foo{Int, Int}(2, 2)
 end
 
 include("destruct.jl")
