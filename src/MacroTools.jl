@@ -1,6 +1,7 @@
 __precompile__(true)
 module MacroTools
 
+using Compat
 export @match, @capture
 
 include("match.jl")
