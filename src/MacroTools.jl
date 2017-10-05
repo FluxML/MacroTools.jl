@@ -11,5 +11,6 @@ include("utils.jl")
 
 include("examples/destruct.jl")
 include("examples/threading.jl")
+include("examples/forward.jl")
 
 end # module
