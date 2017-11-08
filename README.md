@@ -215,6 +215,7 @@ end
 function name{params}(args; kwargs)::rtype where {whereparams}
    body
 end
+```
 
 and returns `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
 calling `MacroTools.combinedef(dict)`, or explicitly with
