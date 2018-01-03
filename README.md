@@ -83,7 +83,8 @@ objects or the `typeof` atomic stuff like `Symbol`s and `Int`s. For example:
 ```
 
 This will match a call to the `foo` function which has a single argument, which
-may either be a `String` object or a `Expr(:string, ...)`. Julia string literals
+may either be a `String` object or a `Expr(:string, ...)`
+(e.g. `@capture(:(foo("$(a)")), foo(x_String_string))`). Julia string literals
 may be parsed into either type of object, so this is a handy way to catch both.
 
 Another common use case is to catch symbol literals, e.g.
