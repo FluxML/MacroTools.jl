@@ -120,8 +120,6 @@ function inexpr(ex, x)
   return result
 end
 
-const animals = split(read(joinpath(dirname(@__FILE__), "..", "animals.txt"), String))
-
 isgensym(s::Symbol) = contains(string(s), "#")
 isgensym(s) = false
 
@@ -132,10 +130,10 @@ Replaces gensyms with animal names. This makes gensym'd code far easier to
 follow.
 """
 function alias_gensyms(ex)
+  left = copy(animals)
   syms = Dict{Symbol, Symbol}()
-  s(x) = get!(syms, x, lowercase(rand(filter(s->!(s in values(syms)), animals))))
   prewalk(ex) do x
-    isgensym(x) ? s(x) : x
+    isgensym(x) ? Base.@get!(syms, x, pop!(left)) : x
   end
 end
 
