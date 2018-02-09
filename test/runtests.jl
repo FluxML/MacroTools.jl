@@ -115,6 +115,8 @@ let
     @test fwhere(10) == Int
     @splitcombine manywhere(x::T, y::Vector{U}) where T <: U where U = (T, U)
     @test manywhere(1, Number[2.0]) == (Int, Number)
+    @splitcombine addwhere(a::T, b::S)::T where T where S = T(a+b)
+    @test addwhere(1,2.0) == 3
 
     struct Foo{A, B}
         a::A
