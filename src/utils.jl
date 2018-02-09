@@ -191,6 +191,9 @@ function gatherwheres(ex)
   if @capture(ex, (f_ where {params1__}))
     f2, params2 = gatherwheres(f)
     (f2, (params1..., params2...))
+  elseif @capture(ex, (f_::rtype_ where {params1__}))
+      f2, params2 = gatherwheres(:($f::$rtype))
+      (f2, (params1..., params2...))
   else
     (ex, ())
   end
