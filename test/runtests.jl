@@ -1,5 +1,6 @@
 using MacroTools
-using Base.Test
+using Compat
+using Compat.Test
 
 let
   x = @match :(2+3) begin

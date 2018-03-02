@@ -6,12 +6,12 @@ isatom(x) = symbolliteral(x) || typeof(x) ∉ (Symbol, Expr)
 
 atoms(f, ex) = MacroTools.postwalk(x -> isatom(x) ? f(x) : x, ex)
 
-get′(d::Associative, k::Symbol) =
+get′(d::AbstractDict, k::Symbol) =
   haskey(d, k) ? d[k] :
   haskey(d, string(k)) ? d[string(k)] :
   error("Couldn't destruct key `$k` from collection $d")
 
-get′(d::Associative, k::Symbol, default) =
+get′(d::AbstractDict, k::Symbol, default) =
   haskey(d, k) ? d[k] :
   haskey(d, string(k)) ? d[string(k)] :
   default
