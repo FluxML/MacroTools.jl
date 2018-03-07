@@ -17,8 +17,8 @@ include("examples/threading.jl")
 include("examples/forward.jl")
 
 function __init__()
-    animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
-    global animals = shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
+  animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
+  global animals = shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
 end
 
 end # module
