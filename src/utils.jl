@@ -137,19 +137,21 @@ function alias_gensyms(ex)
   end
 end
 
-# Helper function, from Compat. Use Base.macroexpand in 0.7
-macroexpandmodule(mod::Module, @nospecialize(x)) = eval(mod, :(macroexpand($(QuoteNode(x)))))
-
 """
 More convenient macro expansion, e.g.
 
     @expand @time foo()
 """
-macro expand(ex)
-  :(alias_gensyms(macroexpandmodule($(@static isdefined(Base, Symbol("@__MODULE__")) ?
-                                      __module__ : current_module()),
-                                    $(ex,)[1])))
+@static if VERSION <= v"0.7.0-DEV.484"
+  macro expand(ex)
+    :(alias_gensyms(macroexpand($(current_module()), $(ex,)[1])))
+  end
+else
+  macro expand(ex)
+    :(alias_gensyms(macroexpand($(__module__), $(ex,)[1])))
+  end
 end
+
 
 "Test for function definition expressions."
 isdef(ex) = ismatch(or_(:(function _(__) _ end),
@@ -196,7 +198,7 @@ function gatherwheres(ex)
   end
 end
 
-doc"""    splitdef(fdef)
+md"""    splitdef(fdef)
 
 Match any function definition
 

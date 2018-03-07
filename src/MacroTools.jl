@@ -2,6 +2,8 @@ __precompile__(true)
 module MacroTools
 
 using Compat
+using Compat.Markdown
+using Compat.Random
 export @match, @capture
 
 include("match.jl")
@@ -16,8 +18,7 @@ include("examples/forward.jl")
 
 function __init__()
   animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
-  global const animals =
-    shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
+  global animals = shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
 end
 
 end # module

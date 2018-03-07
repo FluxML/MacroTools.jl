@@ -14,7 +14,7 @@ totype(s::Symbol) = string(s)[1] in 'A':'Z' ? s : Expr(:quote, s)
 function tbnew(s::Symbol)
   istb(s) || return s
   ts = map(Symbol, split(string(s), "_"))
-  name = shift!(ts)
+  name = popfirst!(ts)
   ts = map(totype, ts)
   Expr(:$, :(MacroTools.TypeBind($(Expr(:quote, name)), Set{Any}([$(ts...)]))))
 end

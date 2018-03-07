@@ -1,5 +1,6 @@
 using MacroTools
-using Base.Test
+using Compat
+using Compat.Test
 
 let
   x = @match :(2+3) begin
@@ -40,6 +41,10 @@ let
            y
          end)
   @capture(ex, type T_ fields__ end)
+  @test T == :Foo
+  @test fields == [:(x::Int), :y]
+  
+  @capture(ex, mutable struct T_ fields__ end)
   @test T == :Foo
   @test fields == [:(x::Int), :y]
 end
