@@ -16,7 +16,9 @@ include("examples/destruct.jl")
 include("examples/threading.jl")
 include("examples/forward.jl")
 
-animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
-const animals = shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
+function __init__()
+    animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
+    global animals = shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
+end
 
 end # module
