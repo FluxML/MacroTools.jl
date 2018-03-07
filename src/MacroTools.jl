@@ -2,6 +2,7 @@ __precompile__(true)
 module MacroTools
 
 using Compat
+using Compat.Markdown
 export @match, @capture
 
 include("match.jl")
