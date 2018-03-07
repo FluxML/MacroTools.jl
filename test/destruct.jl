@@ -12,7 +12,7 @@ import Base: ==
 
 struct S
     data::Vector{UInt8}
-    S(s) = new(Vector{UInt8}(s))
+    S(s::String) = new(copy(codeunits((s))))
 end
 ==(s1::S, s2::S) = s1.data == s2.data
 

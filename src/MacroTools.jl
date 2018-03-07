@@ -14,10 +14,14 @@ include("examples/destruct.jl")
 include("examples/threading.jl")
 include("examples/forward.jl")
 
+const animals = Symbol[]
+
 function __init__()
   animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
-  global const animals =
-    shuffle(Symbol.(lowercase.(split(read(animals_file, String)))))
+  _animals = split(read(animals_file, String))
+  resize!(animals, length(_animals))
+  animals .= Symbol.(lowercase.(_animals))
+  Compat.Random.shuffle!(animals)
 end
 
 end # module

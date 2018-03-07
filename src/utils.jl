@@ -137,16 +137,13 @@ function alias_gensyms(ex)
   end
 end
 
-# Helper function, from Compat. Use Base.macroexpand in 0.7
-macroexpandmodule(mod::Module, @nospecialize(x)) = eval(mod, :(macroexpand($(QuoteNode(x)))))
-
 """
 More convenient macro expansion, e.g.
 
     @expand @time foo()
 """
 macro expand(ex)
-  :(alias_gensyms(macroexpandmodule($(@static isdefined(Base, Symbol("@__MODULE__")) ?
+  :(alias_gensyms(macroexpand($(@static isdefined(Base, Symbol("@__MODULE__")) ?
                                       __module__ : current_module()),
                                     $(ex,)[1])))
 end
@@ -196,7 +193,7 @@ function gatherwheres(ex)
   end
 end
 
-doc"""    splitdef(fdef)
+"""    splitdef(fdef)
 
 Match any function definition
 
@@ -212,9 +209,9 @@ calling `MacroTools.combinedef(dict)`, or explicitly with
 ```
 rtype = get(dict, :rtype, :Any)
 all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                            $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
+:(function \$(dict[:name]){\$(all_params...)}(\$(dict[:args]...);
+                                            \$(dict[:kwargs]...))::\$rtype
+      \$(dict[:body])
   end)
 ```
 """
