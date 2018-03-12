@@ -198,7 +198,7 @@ function gatherwheres(ex)
   end
 end
 
-md"""    splitdef(fdef)
+"""    splitdef(fdef)
 
 Match any function definition
 
@@ -214,9 +214,9 @@ calling `MacroTools.combinedef(dict)`, or explicitly with
 ```
 rtype = get(dict, :rtype, :Any)
 all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                            $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
+:(function \$(dict[:name]){\$(all_params...)}(\$(dict[:args]...);
+                                            \$(dict[:kwargs]...))::\$rtype
+      \$(dict[:body])
   end)
 ```
 """

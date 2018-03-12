@@ -40,7 +40,7 @@ let
            x::Int
            y
          end)
-  @capture(ex, type T_ fields__ end)
+  @capture(ex, mutable struct T_ fields__ end)
   @test T == :Foo
   @test fields == [:(x::Int), :y]
   
