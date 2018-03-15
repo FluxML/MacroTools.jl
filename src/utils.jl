@@ -304,8 +304,8 @@ function splitarg(arg_expr)
     splitvar(arg) =
         @match arg begin
             ::T_ => (nothing, T)
-            name_::T_ => (name::Symbol, T)
-            x_ => (x::Symbol, :Any)
+            name_::T_ => (name, T)
+            x_ => (x, :Any)
         end
     (is_splat = @capture(arg_expr, arg_expr2_...)) || (arg_expr2 = arg_expr)
     if @capture(arg_expr2, arg_ = default_)
