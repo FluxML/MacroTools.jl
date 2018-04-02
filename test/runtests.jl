@@ -96,6 +96,15 @@ macro splitcombine(fundef) # should be a no-op
     esc(MacroTools.combinedef(dict))
 end
 
+# Macros for testing that splitcombine doesn't break
+# macrocalls in bodies
+macro zeroarg()
+   :(1)
+end
+macro onearg(x)
+   :(1+$(esc(x)))
+end
+
 let
     # Ideally we'd compare the result against :(function f(x)::Int 10 end),
     # but it fails because of :line and :block differences
@@ -120,6 +129,10 @@ let
     @test fwhere(10) == Int
     @splitcombine manywhere(x::T, y::Vector{U}) where T <: U where U = (T, U)
     @test manywhere(1, Number[2.0]) == (Int, Number)
+    @splitcombine fmacro0() = @zeroarg
+    @test fmacro0() == 1
+    @splitcombine fmacro1() = @onearg 1
+    @test fmacro1() == 2
 
     struct Foo{A, B}
         a::A
