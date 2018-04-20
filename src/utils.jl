@@ -132,10 +132,33 @@ isgensym(s::Symbol) = contains(string(s), "#")
 isgensym(s) = false
 
 """
+    gensyms_to_ids(expr)
+
+Replaces gensyms with unique ids (deterministically)
+"""
+function gensyms_to_ids(ex)
+  counter = 0
+  base_id = "sym_id_"
+  syms = Dict{Symbol, Symbol}()
+  prewalk(ex) do x
+    if isgensym(x)
+      repl_sym = Symbol("$base_id$counter")
+      #tried the following, but it did not work:
+      #repl_sym = Symbol(replace(string(x), "#", ""))
+      counter+=1
+      Base.@get!(syms, x, repl_sym)
+    else
+      x
+    end
+
+  end
+end
+
+"""
     alias_gensyms(expr)
 
-Replaces gensyms with animal names. This makes gensym'd code far easier to
-follow.
+Replaces gensyms with animal names
+This makes gensym'd code far easier to follow.
 """
 function alias_gensyms(ex)
   left = copy(animals)
