@@ -131,11 +131,34 @@ end
 isgensym(s::Symbol) = contains(string(s), "#")
 isgensym(s) = false
 
+function gensymname(x::Symbol)
+  m = Base.match(r"##(.+)#\d+", String(x))
+  m == nothing || return m.captures[1]
+  m = Base.match(r"#\d+#(.+)", String(x))
+  m == nothing || return m.captures[1]
+  return "x"
+end
+
+"""
+    gensym_ids(expr)
+
+Replaces gensyms with unique ids (deterministically)
+"""
+function gensym_ids(ex)
+  counter = 0
+  syms = Dict{Symbol, Symbol}()
+  prewalk(ex) do x
+    isgensym(x) ?
+      Base.@get!(syms, x, Symbol(gensymname(x), "_", counter+=1)) :
+      x
+  end
+end
+
 """
     alias_gensyms(expr)
 
-Replaces gensyms with animal names. This makes gensym'd code far easier to
-follow.
+Replaces gensyms with animal names
+This makes gensym'd code far easier to follow.
 """
 function alias_gensyms(ex)
   left = copy(animals)
