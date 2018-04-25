@@ -60,7 +60,6 @@ Echidna
 Eel
 Eland
 Elephant
-Elephant seal
 Elk
 Emu
 Falcon
@@ -74,7 +73,6 @@ Frog
 Gaur
 Gazelle
 Gerbil
-Giant panda
 Giraffe
 Gnat
 Gnu
@@ -156,7 +154,7 @@ Penguin
 Pheasant
 Pig
 Pigeon
-Polar bear
+Polarbear
 Pony
 Porcupine
 Porpoise
