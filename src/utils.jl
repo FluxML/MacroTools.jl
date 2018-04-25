@@ -131,26 +131,26 @@ end
 isgensym(s::Symbol) = contains(string(s), "#")
 isgensym(s) = false
 
+function gensymname(x::Symbol)
+  m = Base.match(r"##(.+)#\d+", String(x))
+  m == nothing || return m.captures[1]
+  m = Base.match(r"#\d+#(.+)", String(x))
+  m == nothing || return m.captures[1]
+  return "x"
+end
+
 """
-    gensyms_to_ids(expr)
+    gensym_ids(expr)
 
 Replaces gensyms with unique ids (deterministically)
 """
-function gensyms_to_ids(ex)
+function gensym_ids(ex)
   counter = 0
-  base_id = "sym_id_"
   syms = Dict{Symbol, Symbol}()
   prewalk(ex) do x
-    if isgensym(x)
-      repl_sym = Symbol("$base_id$counter")
-      #tried the following, but it did not work:
-      #repl_sym = Symbol(replace(string(x), "#", ""))
-      counter+=1
-      Base.@get!(syms, x, repl_sym)
-    else
+    isgensym(x) ?
+      Base.@get!(syms, x, Symbol(gensymname(x), "_", counter+=1)) :
       x
-    end
-
   end
 end
 
