@@ -4,7 +4,9 @@ struct TypeBind
 end
 
 istb(s) = false
-istb(s::Symbol) = !(endswith(string(s), "_") || endswith(string(s), "_str")) && contains(string(s), "_")
+istb(s::Symbol) = !(endswith(string(s), "_") ||
+                    endswith(string(s), "_str")) &&
+                    occursin("_", string(s))
 
 tbname(s::Symbol) = Symbol(split(string(s), "_")[1])
 tbname(s::TypeBind) = s.name

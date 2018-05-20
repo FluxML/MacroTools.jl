@@ -128,7 +128,7 @@ function inexpr(ex, x)
   return result
 end
 
-isgensym(s::Symbol) = contains(string(s), "#")
+isgensym(s::Symbol) = occursin("#", string(s))
 isgensym(s) = false
 
 function gensymname(x::Symbol)
