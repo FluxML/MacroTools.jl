@@ -11,7 +11,7 @@ function store!(env, name, ex)
 end
 
 isbinding(s) = false
-isbinding(s::Symbol) = contains(string(s), r"[^_]_(_str)?$")
+isbinding(s::Symbol) = occursin(r"[^_]_(_str)?$", string(s))
 
 function bname(s::Symbol)
   Symbol(Base.match(r"^@?(.*?)_+(_str)?$", string(s)).captures[1])
@@ -26,7 +26,7 @@ match_inner(pat::QuoteNode, ex::QuoteNode, env) =
   match(pat.value, ex.value, env)
 
 isslurp(s) = false
-isslurp(s::Symbol) = s == :__ || contains(string(s), r"[^_]__$")
+isslurp(s::Symbol) = s == :__ || occursin(r"[^_]__$", string(s))
 
 function slurprange(pat)
   slurps = length(filter(isslurp, pat))
