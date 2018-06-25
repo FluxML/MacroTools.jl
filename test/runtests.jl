@@ -43,7 +43,7 @@ let
   @capture(ex, mutable struct T_ fields__ end)
   @test T == :Foo
   @test fields == [:(x::Int), :y]
-  
+
   @capture(ex, mutable struct T_ fields__ end)
   @test T == :Foo
   @test fields == [:(x::Int), :y]
@@ -85,6 +85,12 @@ let
   @test (a, b) == (:a, :b)
   @capture(ex, f(x_))
   @test isexpr(x, :kw)
+end
+
+let
+  ex = :(@foo(a,b))
+  @capture(ex, @foo(a_,b_))
+  @test (a, b) == (:a, :b)
 end
 
 macro nothing_macro()

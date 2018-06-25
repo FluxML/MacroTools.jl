@@ -81,6 +81,9 @@ function normalise(ex)
   return ex
 end
 
+# No longer removed from macro calls
+match(::LineNumberNode, ::LineNumberNode, _) = nothing
+
 function match(pat, ex, env)
   pat = normalise(pat)
   pat == :_ && return env
