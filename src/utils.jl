@@ -209,6 +209,7 @@ longdef(ex) = prewalk(longdef1, ex)
 function shortdef1(ex)
   @match ex begin
     function f_(args__) body_ end => @q $f($(args...)) = $body
+    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $body
     function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $body
     function (args__,) body_ end => @q ($(args...),) -> $body
     ((args__,) -> body_) => ex
