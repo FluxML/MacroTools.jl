@@ -150,3 +150,4 @@ let
 end
 
 include("destruct.jl")
+include("structdef.jl")

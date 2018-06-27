@@ -10,6 +10,7 @@ include("types.jl")
 include("union.jl")
 include("macro.jl")
 include("utils.jl")
+include("structdef.jl")
 
 include("examples/destruct.jl")
 include("examples/threading.jl")
