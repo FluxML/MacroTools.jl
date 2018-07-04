@@ -17,9 +17,9 @@ include("examples/threading.jl")
 include("examples/forward.jl")
 
 const animals = Symbol[]
+const animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
 
 function __init__()
-  animals_file = joinpath(dirname(@__FILE__), "..", "animals.txt")
   _animals = split(read(animals_file, String))
   resize!(animals, length(_animals))
   animals .= Symbol.(lowercase.(_animals))
