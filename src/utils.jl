@@ -1,6 +1,11 @@
 export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
   longdef, shortdef, @expand, makeif, prettify, splitdef, splitarg
 
+"""
+    assoc!(d, k, v)
+
+is the same as `d[k] = v` but returns `d` rather than `v`.
+"""
 assoc!(d, k, v) = (d[k] = v; d)
 
 """
