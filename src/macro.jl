@@ -52,7 +52,7 @@ macro match(ex, lines)
     ex = $(esc(ex))
   end
   body = foldr((clause, body) -> makeclause(clause..., body),
-               nothing, clauses(lines))
+               clauses(lines), init = nothing)
   push!(result.args, body)
   return result
 end
