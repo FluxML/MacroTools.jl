@@ -368,7 +368,11 @@ end
 flatten(ex) = postwalk(flatten1, ex)
 
 function makeif(clauses, els = nothing)
-  foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
+  @static if VERSION < v"0.7.0-"
+    foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
+  else
+    foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), clauses; init=els)
+  end
 end
 
 unresolve1(x) = x
