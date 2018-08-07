@@ -387,7 +387,7 @@ function resyntax(ex)
       setfield!(x_, :f_, v_) => :($x.$f = $v)
       getindex(x_, i__) => :($x[$(i...)])
       tuple(xs__) => :($(xs...),)
-      ctranspose(x_) => :($x')
+      adjoint(x_) => :($x')
       _ => x
     end
   end
