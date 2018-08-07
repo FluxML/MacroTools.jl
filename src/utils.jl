@@ -388,7 +388,6 @@ function resyntax(ex)
       getindex(x_, i__) => :($x[$(i...)])
       tuple(xs__) => :($(xs...),)
       ctranspose(x_) => :($x')
-      # transpose(x_) => :($x.')
       _ => x
     end
   end
