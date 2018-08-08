@@ -1,5 +1,8 @@
 # MacroTools.jl
 
+[![Build Status](https://travis-ci.org/MikeInnes/MacroTools.jl.svg?branch=master)](https://travis-ci.org/MikeInnes/MacroTools.jl)
+[![codecov.io](http://codecov.io/github/MikeInnes/MacroTools.jl/coverage.svg?branch=master)](http://codecov.io/github/MikeInnes/MacroTools.jl?branch=master)
+
 This library provides helpful tools for writing macros, notably a very simple
 but powerful templating system and some functions that have proven useful to me (see
 [utils.jl](src/utils.jl).)
@@ -237,8 +240,8 @@ such as `x::Int=2` and returns `(arg_name, arg_type, slurp, default)`. `default`
 ```julia
 > map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
- (:y, :Any, false, nothing)  
- (:a, :Any, false, 2)        
- (:x, :Int, false, :nothing) 
+ (:y, :Any, false, nothing)
+ (:a, :Any, false, 2)
+ (:x, :Int, false, :nothing)
  (:args, :Any, true, nothing)
 ```

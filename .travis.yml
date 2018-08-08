@@ -14,3 +14,5 @@ notifications:
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("MacroTools"); Pkg.test("MacroTools"; coverage=true)'
+after_success:
+  - julia -e 'cd(Pkg.dir("MacroTools")); Pkg.add("MacroTools"); using Coverage; Codecov.submit(Codecov.process_folder())'
