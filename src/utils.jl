@@ -128,7 +128,10 @@ inside `expr`.
 function inexpr(ex, x)
   result = false
   MacroTools.postwalk(ex) do y
-    y == x && (result = true)
+    if y == x 
+      result = true
+    end
+    return y
   end
   return result
 end
