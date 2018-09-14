@@ -21,6 +21,15 @@ cost(d::Delete) = nodes(d.tree)
 
 Base.show(io::IO, d::Delete) = print(io, "delete ", d.tree)
 
+struct Replace
+  old
+  new
+end
+
+cost(r::Replace) = nodes(r.old)
+
+Base.show(io::IO, r::Replace) = print(io, "replace ", r.old, " => ", r.new)
+
 struct Patch
   ps::Vector{Any}
 end
@@ -59,6 +68,12 @@ function insert(f1, f2)
   fdiff(f1, f2[2:end]) + Patch([Insert(f2[1])])
 end
 
+function replace(f1, f2)
+  (isempty(f1) || isempty(f2)) && return
+  (label(f1[1]) == label(f2[1])) && return
+  fdiff(f1[2:end], f2[2:end]) + Patch([Replace(f1[1], f2[1])])
+end
+
 function modify(f1, f2)
   (isempty(f1) || isempty(f2)) && return
   label(f1[1]) == label(f2[1]) || return
@@ -68,7 +83,7 @@ end
 
 function fdiff(f1, f2)
   isempty(f1) && isempty(f2) && return Patch([])
-  best([f(f1, f2) for f in [insert, delete, modify]])
+  best([f(f1, f2) for f in [replace, insert, delete, modify]])
 end
 
 diff(x1, x2) = fdiff([x1], [x2])
