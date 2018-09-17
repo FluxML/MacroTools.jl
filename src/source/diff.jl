@@ -11,7 +11,10 @@ end
 
 cost(i::Insert) = 1
 
-Base.show(io::IO, i::Insert) = print(io, "insert ", i.tree)
+function Base.show(io::IO, i::Insert)
+  print(io, "insert ")
+  show(io, i.tree)
+end
 
 struct Delete
   tree
@@ -19,7 +22,10 @@ end
 
 cost(d::Delete) = nodes(d.tree)
 
-Base.show(io::IO, d::Delete) = print(io, "delete ", d.tree)
+function Base.show(io::IO, d::Delete)
+  print(io, "delete ")
+  show(io, d.tree)
+end
 
 struct Replace
   old
@@ -28,7 +34,12 @@ end
 
 cost(r::Replace) = nodes(r.old)
 
-Base.show(io::IO, r::Replace) = print(io, "replace ", r.old, " => ", r.new)
+function Base.show(io::IO, r::Replace)
+  print(io, "replace ")
+  show(io, r.old)
+  print(io, " => ")
+  show(io, r.new)
+end
 
 struct Patch
   ps::Vector{Any}
