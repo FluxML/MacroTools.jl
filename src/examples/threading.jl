@@ -22,7 +22,7 @@ macro >(exs...)
     isexpr(ex, :block)            ? thread(x, rmlines(ex).args...) :
     Expr(:call, ex, x)
 
-  thread(x, exs...) = reduce(thread, x, exs)
+  thread(x, exs...) = Compat.reduce(thread, exs, init=x)
 
   esc(thread(exs...))
 end
@@ -42,7 +42,7 @@ macro >>(exs...)
     isexpr(ex, :block)            ? thread(x, rmlines(ex).args...) :
     Expr(:call, ex, x)
 
-  thread(x, exs...) = reduce(thread, x, exs)
+  thread(x, exs...) = Compat.reduce(thread, exs, init=x)
 
   esc(thread(exs...))
 end

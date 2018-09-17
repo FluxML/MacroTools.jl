@@ -368,7 +368,11 @@ end
 flatten(ex) = postwalk(flatten1, ex)
 
 function makeif(clauses, els = nothing)
-  foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
+  @static if VERSION < v"0.7.0-"
+    foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
+  else
+    foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), clauses; init=els)
+  end
 end
 
 unresolve1(x) = x
@@ -383,8 +387,7 @@ function resyntax(ex)
       setfield!(x_, :f_, v_) => :($x.$f = $v)
       getindex(x_, i__) => :($x[$(i...)])
       tuple(xs__) => :($(xs...),)
-      ctranspose(x_) => :($x')
-      transpose(x_) => :($x.')
+      adjoint(x_) => :($x')
       _ => x
     end
   end

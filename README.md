@@ -13,7 +13,7 @@ have a type definition:
 
 ```julia
 ex = quote
-  type Foo
+  struct Foo
     x::Int
     y
   end
@@ -23,7 +23,7 @@ end
 If you know what you're doing, you can pull out the name and fields via:
 
 ```julia
-julia> if isexpr(ex.args[2], :type)
+julia> if isexpr(ex.args[2], :struct)
          (ex.args[2].args[2], ex.args[2].args[3].args)
        end
 (:Foo,{:( # line 3:),:(x::Int),:( # line 4:),:y})
@@ -40,7 +40,7 @@ Enter MacroTools:
 ```julia
 julia> using MacroTools
 
-julia> @capture(ex, type T_ fields__ end)
+julia> @capture(ex, struct T_ fields__ end)
 true
 
 julia> T, fields
@@ -91,12 +91,12 @@ Another common use case is to catch symbol literals, e.g.
 
 ```julia
 @capture(ex,
-  type T_Symbol
+  struct T_Symbol
     fields__
   end)
 ```
 
-which will match e.g. `type Foo ...` but not `type Foo{V} ...`
+which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
 
 ### Unions
 
