@@ -1,6 +1,6 @@
 module MacroTools
 
-using Compat
+using DataStructures, Compat
 using Compat.Markdown
 export @match, @capture
 
