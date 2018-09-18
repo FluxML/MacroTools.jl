@@ -10,6 +10,7 @@ function nodes(x::Expr)
 end
 
 struct Insert
+  idx::Vector{Int}
   tree
 end
 
@@ -21,6 +22,7 @@ function Base.show(io::IO, i::Insert)
 end
 
 struct Delete
+  idx::Vector{Int}
   tree
 end
 
@@ -32,6 +34,7 @@ function Base.show(io::IO, d::Delete)
 end
 
 struct Replace
+  idx::Vector{Int}
   old
   new
 end
@@ -82,10 +85,7 @@ end
 
 htable(x, y) = Broadcast.broadcasted((x, y) -> x > y ? x-y : y > x ? 1 : 0, nleft(x), nleft(y)')
 
-function fdiff(f1, f2)
-  f1 == f2 && return Patch([])
-  isempty(f1) && return Patch(Insert.(f2))
-  isempty(f2) && return Patch(Delete.(f1))
+function fdiff(ii, f1, f2)
   m, n = length(f1)+1, length(f2)+1
   ps = Dict{Tuple{Int,Int},Patch}()
   q = PriorityQueue{Tuple{Int,Int},Int}()
@@ -102,13 +102,15 @@ function fdiff(f1, f2)
     (i,j) == (m,n) && return ps[(i,j)]
     complete[i,j] = true
     p = ps[(i, j)]
-    i < m && !complete[i+1,j] && visit!(i+1, j, p + Patch([Delete(f1[i])]))
-    j < n && !complete[i,j+1] && visit!(i, j+1, p + Patch([Insert(f2[j])]))
-    i < m && j < n && !complete[i+1,j+1] && visit!(i+1, j+1,p + diff(f1[i],f2[j]))
+    i < m && !complete[i+1,j] && visit!(i+1, j, p + Patch([Delete([ii...,i], f1[i])]))
+    j < n && !complete[i,j+1] && visit!(i, j+1, p + Patch([Insert([ii...,i-1], f2[j])]))
+    i < m && j < n && !complete[i+1,j+1] && visit!(i+1, j+1, p + diff([ii...,i],f1[i],f2[j]))
   end
 end
 
-diff(x1, x2) =
-  label(x1) != label(x2) ? Patch([Replace(x1, x2)]) :
+diff(ii, x1, x2) =
+  label(x1) != label(x2) ? Patch([Replace(ii, x1, x2)]) :
   x1 == x2               ? Patch([]) :
-  fdiff(children(x1), children(x2))
+  fdiff(ii, children(x1), children(x2))
+
+diff(a, b) = diff([], a, b)
