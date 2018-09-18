@@ -42,14 +42,15 @@ function Base.show(io::IO, r::Replace)
 end
 
 struct Patch
+  cost::Int
   ps::Vector{Any}
 end
 
+Patch(ps) = Patch(isempty(ps) ? 0 : sum(cost.(ps)), ps)
+
 @forward Patch.ps Base.isempty, Base.length
 
-cost(p::Patch) = isempty(p) ? 0 : sum(cost.(p.ps))
-
-a::Patch + b::Patch = Patch([a.ps...,b.ps...])
+a::Patch + b::Patch = Patch(a.cost + b.cost, vcat(a.ps, b.ps))
 
 function Base.show(io::IO, p::Patch)
   println(io, "Expression patch:")
@@ -58,10 +59,8 @@ function Base.show(io::IO, p::Patch)
   end
 end
 
-function best(ps)
-  ps = filter(p -> p != nothing, ps)
-  ps[findmin(cost.(ps))[2]]
-end
+best(a::Patch) = a
+best(a::Patch, b::Patch, c...) = best(a.cost < b.cost ? a : b, c...)
 
 label(ex) = ex
 label(ex::Expr) = Expr(ex.head)
@@ -69,40 +68,28 @@ label(ex::Expr) = Expr(ex.head)
 children(ex) = []
 children(ex::Expr) = ex.args
 
-struct DiffCtx
-  idx::Vector{Int}
-  cache::Dict{Any,Patch}
+function fdiff(f1, f2)
+  f1 == f2 && return Patch([])
+  isempty(f1) && return Patch(Insert.(f2))
+  isempty(f2) && return Patch(Delete.(f1))
+  ps = Matrix{Patch}(undef, length(f1)+1, length(f2)+1)
+  ps[1,1] = Patch([])
+  for i = 1:length(f1)
+    ps[i+1,1] = Patch(Delete.(f1[1:end-(length(f1)-i)]))
+  end
+  for j = 1:length(f2)
+    ps[1, j+1] = Patch(Insert.(f2[1:end-(length(f2)-j)]))
+  end
+  for i = 1:length(f1), j = 1:length(f2)
+    delete = ps[i, j+1] + Patch([Delete(f1[i])])
+    insert = ps[i+1, j] + Patch([Insert(f2[j])])
+    modify = ps[i,j] + diff(f1[i],f2[j])
+    ps[i+1,j+1] = best(delete, insert, modify)
+  end
+  return ps[end,end]
 end
 
-DiffCtx() = DiffCtx([],IdDict())
-
-function delete(cx::DiffCtx, f1, f2)
-  isempty(f1) && return
-  fdiff(cx, f1[2:end], f2) + Patch([Delete(f1[1])])
-end
-
-function insert(cx::DiffCtx, f1, f2)
-  isempty(f2) && return
-  fdiff(cx, f1, f2[2:end]) + Patch([Insert(f2[1])])
-end
-
-function replace(cx::DiffCtx, f1, f2)
-  (isempty(f1) || isempty(f2)) && return
-  (label(f1[1]) == label(f2[1])) && return
-  fdiff(cx, f1[2:end], f2[2:end]) + Patch([Replace(f1[1], f2[1])])
-end
-
-function modify(cx::DiffCtx, f1, f2)
-  (isempty(f1) || isempty(f2)) && return
-  label(f1[1]) == label(f2[1]) || return
-  fdiff(cx, children(f1[1]), children(f2[1])) +
-    fdiff(cx, f1[2:end], f2[2:end])
-end
-
-function fdiff(cx::DiffCtx, f1, f2)
-  isempty(f1) && isempty(f2) && return Patch([])
-  haskey(cx.cache, (f1, f2)) && return cx.cache[(f1, f2)]
-  cx.cache[(f1, f2)] = best([f(cx, f1, f2) for f in [replace, insert, delete, modify]])
-end
-
-diff(x1, x2) = fdiff(DiffCtx(), [x1], [x2])
+diff(x1, x2) =
+  label(x1) != label(x2) ? Patch([Replace(x1, x2)]) :
+  x1 == x2               ? Patch([]) :
+  fdiff(children(x1), children(x2))
