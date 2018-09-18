@@ -68,25 +68,40 @@ label(ex::Expr) = Expr(ex.head)
 children(ex) = []
 children(ex::Expr) = ex.args
 
+function nleft(xs)
+  h = zeros(Int, length(xs) + 1)
+  for i = length(xs):-1:1
+    h[i] = h[i+1] + nodes(xs[i])
+  end
+  return h
+end
+
+htable(x, y) = Broadcast.broadcasted((x, y) -> x > y ? x-y : y > x ? 1 : 0, nleft(x), nleft(y)')
+
 function fdiff(f1, f2)
   f1 == f2 && return Patch([])
   isempty(f1) && return Patch(Insert.(f2))
   isempty(f2) && return Patch(Delete.(f1))
-  ps = Matrix{Patch}(undef, length(f1)+1, length(f2)+1)
-  ps[1,1] = Patch([])
-  for i = 1:length(f1)
-    ps[i+1,1] = Patch(Delete.(f1[1:end-(length(f1)-i)]))
+  m, n = length(f1)+1, length(f2)+1
+  ps = Dict{Tuple{Int,Int},Patch}()
+  q = PriorityQueue{Tuple{Int,Int},Int}()
+  complete = falses(m, n)
+  h = htable(f1, f2)
+  function visit!(i, j, p)
+    haskey(ps, (i, j)) && (p.cost >= ps[(i,j)].cost) && return
+    ps[(i,j)] = p
+    q[(i,j)] = p.cost + h[i,j]
   end
-  for j = 1:length(f2)
-    ps[1, j+1] = Patch(Insert.(f2[1:end-(length(f2)-j)]))
+  visit!(1, 1, Patch([]))
+  while !isempty(q)
+    (i, j) = dequeue!(q)
+    (i,j) == (m,n) && return ps[(i,j)]
+    complete[i,j] = true
+    p = ps[(i, j)]
+    i < m && !complete[i+1,j] && visit!(i+1, j, p + Patch([Delete(f1[i])]))
+    j < n && !complete[i,j+1] && visit!(i, j+1, p + Patch([Insert(f2[j])]))
+    i < m && j < n && !complete[i+1,j+1] && visit!(i+1, j+1,p + diff(f1[i],f2[j]))
   end
-  for i = 1:length(f1), j = 1:length(f2)
-    delete = ps[i, j+1] + Patch([Delete(f1[i])])
-    insert = ps[i+1, j] + Patch([Insert(f2[j])])
-    modify = ps[i,j] + diff(f1[i],f2[j])
-    ps[i+1,j+1] = best(delete, insert, modify)
-  end
-  return ps[end,end]
 end
 
 diff(x1, x2) =
