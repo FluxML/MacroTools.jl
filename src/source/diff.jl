@@ -1,8 +1,12 @@
 import Base: +
 
-function nodes(ex)
-  n = 0
-  postwalk(_ -> n += 1, ex)
+nodes(x) = 1
+function nodes(x::Expr)
+  n = 1
+  for y in x.args
+    n += nodes(y)
+  end
+  return n
 end
 
 struct Insert
