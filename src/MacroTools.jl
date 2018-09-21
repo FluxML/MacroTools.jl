@@ -17,6 +17,7 @@ include("examples/threading.jl")
 include("examples/forward.jl")
 
 include("source/diff.jl")
+include("source/cst.jl")
 
 const animals = Symbol[]
 const animals_file = joinpath(@__DIR__, "..", "animals.txt")
