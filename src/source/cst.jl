@@ -8,15 +8,14 @@ struct SourceFile
   ast::Expr
 end
 
-function SourceFile(path::String)
-  text = String(read(path))
+function SourceFile(path::String, text = String(read(path)))
   cst = CSTParser.parse(text, true)
   SourceFile(path, text, cst, Expr(cst))
 end
 
 function replacement(src::SourceFile, p::Replace)
   _, span = charrange(src.cst, expr_location(src.cst, p.idx))
-  span => sprint(show, p.new)
+  span => sprint(Base.show_unquoted, p.new)
 end
 
 replacement(src::SourceFile, p::Patch) = [replacement(src, p) for p in p.ps]
@@ -41,3 +40,20 @@ function patch!(src::SourceFile, p)
     patch(io, src, p)
   end
 end
+
+function sourcemap(f, src::SourceFile)
+  ex = striplines(f(src.ast))
+  patch(src, diff(src.ast, ex))
+end
+
+# TODO directories
+function sourcemap(f, path::AbstractString)
+  isfile(path) || error("No file at $f")
+  s = SourceFile(path)
+  ex = striplines(f(s.ast))
+  patch!(s, diff(s.ast, ex))
+end
+
+sourcewalk(f, file) = sourcemap(x -> postwalk(f, x), file)
+
+textwalk(f, text) = sourcewalk(f, SourceFile("", text))
