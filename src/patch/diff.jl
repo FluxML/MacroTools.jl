@@ -1,4 +1,4 @@
-import Base: +
+import Base: +, isoperator
 
 nodes(x) = 1
 function nodes(x::Expr)
@@ -69,11 +69,16 @@ end
 best(a::Patch) = a
 best(a::Patch, b::Patch, c...) = best(a.cost < b.cost ? a : b, c...)
 
-label(ex) = ex
-label(ex::Expr) = Expr(ex.head)
+isopchange(x1, x2) =
+  isexpr(x1, :call) &&
+  x1.args[1] isa Symbol &&
+  x2.args[1] isa Symbol &&
+  x1.args[1] != x2.args[1] &&
+  (isoperator(x1.args[1]) || isoperator(x2.args[1]))
 
-children(ex) = []
-children(ex::Expr) = ex.args
+shouldreplace(x1, x2) = x1 != x2
+
+shouldreplace(x1::Expr, x2::Expr) = x1.head != x2.head || isopchange(x1, x2)
 
 function nleft(xs)
   h = zeros(Int, length(xs) + 1)
@@ -109,8 +114,8 @@ function fdiff(ii, f1, f2)
 end
 
 diff(ii, x1, x2) =
-  label(x1) != label(x2) ? Patch([Replace(ii, x1, x2)]) :
+  shouldreplace(x1, x2)  ? Patch([Replace(ii, x1, x2)]) :
   x1 == x2               ? Patch([]) :
-  fdiff(ii, children(x1), children(x2))
+  fdiff(ii, x1.args, x2.args)
 
 diff(a, b) = diff([], a, b)
