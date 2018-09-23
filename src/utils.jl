@@ -288,6 +288,7 @@ function combinedef(dict::Dict)
   rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
   wparams = get(dict, :whereparams, [])
+  body = block(dict[:body])
   name = dict[:name]
   name_param = isempty(params) ? name : :($name{$(params...)})
   # We need the `if` to handle parametric inner/outer constructors like
@@ -296,24 +297,24 @@ function combinedef(dict::Dict)
     if rtype==nothing
       @q(function $name_param($(dict[:args]...);
                               $(dict[:kwargs]...))
-        $(dict[:body].args...)
+        $(body.args...)
         end)
     else
       @q(function $name_param($(dict[:args]...);
                               $(dict[:kwargs]...))::$rtype
-        $(dict[:body].args...)
+        $(body.args...)
         end)
     end
   else
     if rtype==nothing
       @q(function $name_param($(dict[:args]...);
                               $(dict[:kwargs]...)) where {$(wparams...)}
-        $(dict[:body].args...)
+        $(body.args...)
         end)
     else
       @q(function $name_param($(dict[:args]...);
                               $(dict[:kwargs]...))::$rtype where {$(wparams...)}
-        $(dict[:body].args...)
+        $(body.args...)
         end)
     end
   end
