@@ -1,6 +1,17 @@
 using CSTParser
 using CSTParser: EXPR, Location, expr_location, charrange
 
+function precedence_level(cst::EXPR, loc::Location)
+  parent = cst[CSTParser.parent(loc)]
+  if parent isa Union{CSTParser.BinaryOpCall,CSTParser.UnaryOpCall,CSTParser.ChainOpCall}
+    Base.operator_precedence(Expr(parent).args[1])
+  elseif parent isa Union{CSTParser.BinarySyntaxOpCall,CSTParser.UnarySyntaxOpCall}
+    Base.operator_precedence(Expr(parent).head)
+  else
+    0
+  end
+end
+
 struct SourceFile
   path::String
   text::String
@@ -14,8 +25,10 @@ function SourceFile(path::String, text = String(read(path)))
 end
 
 function replacement(src::SourceFile, p::Replace)
-  _, span = charrange(src.cst, expr_location(src.cst, p.idx))
-  span => sprint(Base.show_unquoted, p.new)
+  loc = expr_location(src.cst, p.idx)
+  prec = precedence_level(src.cst, loc)
+  _, span = charrange(src.cst, loc)
+  span => sprint(Base.show_unquoted, p.new, 0, prec)
 end
 
 replacement(src::SourceFile, p::Patch) = [replacement(src, p) for p in p.ps]
