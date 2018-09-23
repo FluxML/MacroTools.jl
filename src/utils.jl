@@ -284,7 +284,7 @@ end
 `combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
 and returns a function definition. """
 function combinedef(dict::Dict)
-  rtype = get(dict, :rtype, :Any)
+  rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
   wparams = get(dict, :whereparams, [])
   name = dict[:name]
@@ -292,15 +292,29 @@ function combinedef(dict::Dict)
   # We need the `if` to handle parametric inner/outer constructors like
   # SomeType{X}(x::X) where X = SomeType{X}(x, x+2)
   if isempty(wparams)
-    :(function $name_param($(dict[:args]...);
-                           $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-      end)
+    if rtype==nothing
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))
+        $(dict[:body].args...)
+        end)
+    else
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype
+        $(dict[:body].args...)
+        end)
+    end
   else
-    :(function $name_param($(dict[:args]...);
-                           $(dict[:kwargs]...))::$rtype where {$(wparams...)}
-      $(dict[:body])
-      end)
+    if rtype==nothing
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...)) where {$(wparams...)}
+        $(dict[:body]...)
+        end)
+    else
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype where {$(wparams...)}
+        $(dict[:body]...)
+        end)
+    end
   end
 end
 
