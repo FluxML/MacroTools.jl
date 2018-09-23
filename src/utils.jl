@@ -307,12 +307,12 @@ function combinedef(dict::Dict)
     if rtype==nothing
       @q(function $name_param($(dict[:args]...);
                               $(dict[:kwargs]...)) where {$(wparams...)}
-        $(dict[:body]...)
+        $(dict[:body].args...)
         end)
     else
       @q(function $name_param($(dict[:args]...);
                               $(dict[:kwargs]...))::$rtype where {$(wparams...)}
-        $(dict[:body]...)
+        $(dict[:body].args...)
         end)
     end
   end
