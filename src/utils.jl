@@ -201,7 +201,7 @@ isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
 
 function longdef1(ex)
   if @capture(ex, (arg_ -> body_))
-    @q function ($arg,) $body end
+    @q function ($arg,) $(body.args...) end
   elseif isshortdef(ex)
     @assert @capture(ex, (fcall_ = body_))
     striplines(Expr(:function, fcall, body))
@@ -213,12 +213,13 @@ longdef(ex) = prewalk(longdef1, ex)
 
 function shortdef1(ex)
   @match ex begin
-    function f_(args__) body_ end => @q $f($(args...)) = $body
-    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $body
-    function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $body
-    function (args__,) body_ end => @q ($(args...),) -> $body
+    function f_(args__) body_ end => @q $f($(args...)) = $(body.args...)
+    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $(body.args...)
+    function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $(body.args...)
+    function f_(args__)::rtype_ where T__ body_ end => @q ($f($(args...))::$rtype) where $(T...) = $(body.args...)
+    function (args__,) body_ end => @q ($(args...),) -> $(body.args...)
     ((args__,) -> body_) => ex
-    (arg_ -> body_) => @q ($arg,) -> $body
+    (arg_ -> body_) => @q ($arg,) -> $(body.args...)
     _ => ex
   end
 end
