@@ -1,5 +1,8 @@
 using CSTParser
-using CSTParser: EXPR, Location, expr_location, charrange
+using CSTParser: EXPR, Call, Location, expr_location, charrange
+
+expridx(x, ii) = (@assert isempty(ii); x)
+expridx(x::Expr, ii) = isempty(ii) ? x : expridx(x.args[ii[1]], ii[2:end])
 
 function precedence_level(cst::EXPR, loc::Location)
   parent = cst[CSTParser.parent(loc)]
@@ -10,6 +13,14 @@ function precedence_level(cst::EXPR, loc::Location)
   else
     0
   end
+end
+
+separator(x::EXPR{Call}, i::Integer) = max(i-1, 4)
+
+function separator(cst::EXPR, loc::Location)
+  parent = CSTParser.parent(loc)
+  i = separator(cst[parent], loc.ii[end])
+  CSTParser.child(parent, i)
 end
 
 struct SourceFile
@@ -29,6 +40,20 @@ function replacement(src::SourceFile, p::Replace)
   prec = precedence_level(src.cst, loc)
   _, span = charrange(src.cst, loc)
   span => sprint(Base.show_unquoted, p.new, 0, prec)
+end
+
+function replacement(src::SourceFile, p::Insert)
+  append = p.idx[end] > length(expridx(src.ast, p.idx[1:end-1]).args)
+  append && (p.idx[end] -= 1)
+  loc = expr_location(src.cst, p.idx)
+  span, _ = charrange(src.cst, loc)
+  point = append ? span[end] : span[1]-1
+  sep = charrange(src.cst, separator(src.cst, loc))[1]
+  (1:0).+point => sprint() do io
+    append && write(io, src.text[sep])
+    Base.show_unquoted(io, p.tree, 0, 0)
+    append || write(io, src.text[sep])
+  end
 end
 
 replacement(src::SourceFile, p::Patch) = [replacement(src, p) for p in p.ps]

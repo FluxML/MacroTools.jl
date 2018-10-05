@@ -80,6 +80,8 @@ shouldreplace(x1, x2) = x1 != x2
 
 shouldreplace(x1::Expr, x2::Expr) = x1.head != x2.head || isopchange(x1, x2)
 
+canshift(head, i) = !(head == :call && i == 1)
+
 function nleft(xs)
   h = zeros(Int, length(xs) + 1)
   for i = length(xs):-1:1
@@ -90,7 +92,7 @@ end
 
 htable(x, y) = Broadcast.broadcasted((x, y) -> x > y ? x-y : y > x ? 1 : 0, nleft(x), nleft(y)')
 
-function fdiff(ii, f1, f2)
+function fdiff(head, ii, f1, f2)
   m, n = length(f1)+1, length(f2)+1
   ps = Dict{Tuple{Int,Int},Patch}()
   q = PriorityQueue{Tuple{Int,Int},Int}()
@@ -107,8 +109,10 @@ function fdiff(ii, f1, f2)
     (i,j) == (m,n) && return ps[(i,j)]
     complete[i,j] = true
     p = ps[(i, j)]
-    i < m && !complete[i+1,j] && visit!(i+1, j, p + Patch([Delete([ii...,i], f1[i])]))
-    j < n && !complete[i,j+1] && visit!(i, j+1, p + Patch([Insert([ii...,i-1], f2[j])]))
+    if canshift(head, i)
+      i < m && !complete[i+1,j] && visit!(i+1, j, p + Patch([Delete([ii...,i], f1[i])]))
+      j < n && !complete[i,j+1] && visit!(i, j+1, p + Patch([Insert([ii...,i], f2[j])]))
+    end
     i < m && j < n && !complete[i+1,j+1] && visit!(i+1, j+1, p + diff([ii...,i],f1[i],f2[j]))
   end
 end
@@ -116,6 +120,6 @@ end
 diff(ii, x1, x2) =
   shouldreplace(x1, x2)  ? Patch([Replace(ii, x1, x2)]) :
   x1 == x2               ? Patch([]) :
-  fdiff(ii, x1.args, x2.args)
+  fdiff(x1.head, ii, x1.args, x2.args)
 
 diff(a, b) = diff([], a, b)
