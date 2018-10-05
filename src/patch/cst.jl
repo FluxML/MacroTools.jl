@@ -56,6 +56,14 @@ function replacement(src::SourceFile, p::Insert)
   end
 end
 
+function replacement(src::SourceFile, p::Delete)
+  loc = expr_location(src.cst, p.idx)
+  span, _ = charrange(src.cst, loc)
+  sep = charrange(src.cst, separator(src.cst, loc))[1]
+  span = span[1] > sep[1] ? (sep[1]:span[end]) : (span[1]:sep[end])
+  span => ""
+end
+
 replacement(src::SourceFile, p::Patch) = [replacement(src, p) for p in p.ps]
 
 function patch(io::IO, src::SourceFile, rs)
