@@ -19,11 +19,10 @@ include("examples/forward.jl")
 const animals = Symbol[]
 const animals_file = joinpath(@__DIR__, "..", "animals.txt")
 
-function __init__()
-  _animals = split(read(animals_file, String))
-  resize!(animals, length(_animals))
-  animals .= Symbol.(lowercase.(_animals))
-  Compat.Random.shuffle!(animals)
-end
+# Load and initialize animals symbols.
+_animals = split(read(animals_file, String))
+resize!(animals, length(_animals))
+animals .= Symbol.(lowercase.(_animals))
+Compat.Random.shuffle!(animals)
 
 end # module
