@@ -19,12 +19,18 @@ using Test
 
 # Insertion
 
+@test textwalk(x -> isexpr(x, :call) ? :(f(a,b)) : x, "f(a)") == "f(a, b)"
+@test textwalk(x -> isexpr(x, :call) ? :(f(a)) : x, "f()") == "f(a)"
+
 @test textwalk(x -> isexpr(x, :call) ? :(f(a, b, c)) : x, "f(a, b)") == "f(a, b, c)"
 @test textwalk(x -> isexpr(x, :call) ? :(f(a, c, b)) : x, "f(a, b)") == "f(a, c, b)"
 @test textwalk(x -> isexpr(x, :call) ? :(f(c, a, b)) : x, "f(a, b)") == "f(c, a, b)"
 @test textwalk(x -> isexpr(x, :call) ? :(c(f, a, b)) : x, "f(a, b)") == "c(f, a, b)"
 
 # Deletion
+
+@test textwalk(x -> isexpr(x, :call) ? :(f()) : x, "f(a)") == "f()"
+@test textwalk(x -> isexpr(x, :call) ? :(f()) : x, "f(a,)") == "f()"
 
 @test textwalk(x -> isexpr(x, :call) ? :(f(a, b)) : x, "f(a, b, c)") == "f(a, b)"
 @test textwalk(x -> isexpr(x, :call) ? :(f(a, c)) : x, "f(a, b, c)") == "f(a, c)"

@@ -15,12 +15,19 @@ function precedence_level(cst::EXPR, loc::Location)
   end
 end
 
-separator(x::EXPR{Call}, i::Integer) = max(i-1, 4)
+function separator(cst, loc, x::EXPR{Call}, i)
+  length(x.args) == 3 && return ""
+  length(x.args) == 4 && return ", "
+  charrange(cst, CSTParser.child(loc, max(i-1, 4)))[1]
+end
+
+function separator(cst, loc, x::CSTParser.BinaryOpCall, i)
+  charrange(cst, CSTParser.child(loc, 2))[1]
+end
 
 function separator(cst::EXPR, loc::Location)
   parent = CSTParser.parent(loc)
-  i = separator(cst[parent], loc.ii[end])
-  CSTParser.child(parent, i)
+  separator(cst, parent, cst[parent], loc.ii[end])
 end
 
 struct SourceFile
@@ -46,20 +53,24 @@ function replacement(src::SourceFile, p::Insert)
   append = p.idx[end] > length(expridx(src.ast, p.idx[1:end-1]).args)
   append && (p.idx[end] -= 1)
   loc = expr_location(src.cst, p.idx)
+  # TODO handle cases like this more generally
+  src.cst[CSTParser.parent(loc)] isa EXPR{Call} && (loc.ii[end] = max(loc.ii[end], 2))
   span, _ = charrange(src.cst, loc)
   point = append ? span[end] : span[1]-1
-  sep = charrange(src.cst, separator(src.cst, loc))[1]
+  sep = separator(src.cst, loc)
+  sep isa AbstractRange && (sep = src.text[sep])
   (1:0).+point => sprint() do io
-    append && write(io, src.text[sep])
+    append && write(io, sep)
     Base.show_unquoted(io, p.tree, 0, 0)
-    append || write(io, src.text[sep])
+    append || write(io, sep)
   end
 end
 
 function replacement(src::SourceFile, p::Delete)
   loc = expr_location(src.cst, p.idx)
   span, _ = charrange(src.cst, loc)
-  sep = charrange(src.cst, separator(src.cst, loc))[1]
+  sep = separator(src.cst, loc)
+  sep isa AbstractRange || (sep = span)
   span = span[1] > sep[1] ? (sep[1]:span[end]) : (span[1]:sep[end])
   span => ""
 end
