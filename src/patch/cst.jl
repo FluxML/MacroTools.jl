@@ -15,14 +15,23 @@ function precedence_level(cst::EXPR, loc::Location)
   end
 end
 
+# Get the range at loc, including trailing trivia from the previous node.
+function separator_range(cst, loc)
+  i = loc.ii[end]
+  loc = CSTParser.parent(loc)
+  start = charrange(cst, CSTParser.child(loc, i-1))[1][1]+1
+  stop = charrange(cst, CSTParser.child(loc, i))[1][end]
+  return start:stop
+end
+
 function separator(cst, loc, x::EXPR{Call}, i)
   length(x.args) == 3 && return ""
   length(x.args) == 4 && return ", "
-  charrange(cst, CSTParser.child(loc, max(i-1, 4)))[1]
+  separator_range(cst, CSTParser.child(loc, max(i-1,4)))
 end
 
 function separator(cst, loc, x::CSTParser.BinaryOpCall, i)
-  charrange(cst, CSTParser.child(loc, 2))[1]
+  separator_range(cst, CSTParser.child(loc, 2))
 end
 
 function separator(cst::EXPR, loc::Location)

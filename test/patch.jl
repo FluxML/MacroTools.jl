@@ -29,6 +29,10 @@ testrep(ex, text) = textmap(_ -> Expr(:file, ex), text)
 @test testrep(:(f(c, a, b)), "f(a, b)") == "f(c, a, b)"
 @test testrep(:(c(f, a, b)), "f(a, b)") == "c(f, a, b)"
 
+@test testrep(:(f(a, b, c)), "f(a , b)") == "f(a , b , c)"
+@test testrep(:(a+b+c), "a + b") == "a + b + c"
+@test testrep(:(a+b+c), "a+b") == "a+b+c"
+
 # Deletion
 
 @test testrep(:(f()), "f(a)") == "f()"
