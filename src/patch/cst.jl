@@ -113,4 +113,6 @@ end
 
 sourcewalk(f, file) = sourcemap(x -> postwalk(f, x), file)
 
+textmap(f, text) = sourcemap(f, SourceFile("", text))
+
 textwalk(f, text) = sourcewalk(f, SourceFile("", text))

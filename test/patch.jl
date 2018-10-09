@@ -1,5 +1,7 @@
-using MacroTools: textwalk, @capture, isexpr
+using MacroTools: textmap, textwalk, @capture, isexpr
 using Test
+
+testrep(ex, text) = textmap(_ -> Expr(:file, ex), text)
 
 # Replacement
 
@@ -19,20 +21,20 @@ using Test
 
 # Insertion
 
-@test textwalk(x -> isexpr(x, :call) ? :(f(a,b)) : x, "f(a)") == "f(a, b)"
-@test textwalk(x -> isexpr(x, :call) ? :(f(a)) : x, "f()") == "f(a)"
+@test testrep(:(f(a,b)), "f(a)") == "f(a, b)"
+@test testrep(:(f(a)), "f()") == "f(a)"
 
-@test textwalk(x -> isexpr(x, :call) ? :(f(a, b, c)) : x, "f(a, b)") == "f(a, b, c)"
-@test textwalk(x -> isexpr(x, :call) ? :(f(a, c, b)) : x, "f(a, b)") == "f(a, c, b)"
-@test textwalk(x -> isexpr(x, :call) ? :(f(c, a, b)) : x, "f(a, b)") == "f(c, a, b)"
-@test textwalk(x -> isexpr(x, :call) ? :(c(f, a, b)) : x, "f(a, b)") == "c(f, a, b)"
+@test testrep(:(f(a, b, c)), "f(a, b)") == "f(a, b, c)"
+@test testrep(:(f(a, c, b)), "f(a, b)") == "f(a, c, b)"
+@test testrep(:(f(c, a, b)), "f(a, b)") == "f(c, a, b)"
+@test testrep(:(c(f, a, b)), "f(a, b)") == "c(f, a, b)"
 
 # Deletion
 
-@test textwalk(x -> isexpr(x, :call) ? :(f()) : x, "f(a)") == "f()"
-@test textwalk(x -> isexpr(x, :call) ? :(f()) : x, "f(a,)") == "f()"
+@test testrep(:(f()), "f(a)") == "f()"
+@test testrep(:(f()), "f(a,)") == "f()"
 
-@test textwalk(x -> isexpr(x, :call) ? :(f(a, b)) : x, "f(a, b, c)") == "f(a, b)"
-@test textwalk(x -> isexpr(x, :call) ? :(f(a, c)) : x, "f(a, b, c)") == "f(a, c)"
-@test textwalk(x -> isexpr(x, :call) ? :(f(b, c)) : x, "f(a, b, c)") == "f(b, c)"
-@test textwalk(x -> isexpr(x, :call) ? :(a(b, c)) : x, "f(a, b, c)") == "a(b, c)"
+@test testrep(:(f(a, b)), "f(a, b, c)") == "f(a, b)"
+@test testrep(:(f(a, c)), "f(a, b, c)") == "f(a, c)"
+@test testrep(:(f(b, c)), "f(a, b, c)") == "f(b, c)"
+@test testrep(:(a(b, c)), "f(a, b, c)") == "a(b, c)"
