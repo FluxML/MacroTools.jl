@@ -1,4 +1,4 @@
-export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
+export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
   longdef, shortdef, @expand, makeif, prettify, splitdef, splitarg
 
 """
@@ -48,6 +48,8 @@ isexpr(x::Expr, ts...) = x.head in ts
 isexpr(x, ts...) = any(T->isa(T, Type) && isa(x, T), ts)
 
 isline(ex) = isexpr(ex, :line) || isa(ex, LineNumberNode)
+
+iscall(ex, f) = isexpr(ex, :call) && ex.args[1] == f
 
 """
     rmlines(x)
@@ -128,7 +130,7 @@ inside `expr`.
 function inexpr(ex, x)
   result = false
   MacroTools.postwalk(ex) do y
-    if y == x 
+    if y == x
       result = true
     end
     return y
