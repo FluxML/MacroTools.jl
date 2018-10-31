@@ -4,13 +4,28 @@ os:
   - osx
 julia:
   - 0.6
+  - 1.0
   - nightly
 matrix:
     allow_failures:
     - julia: nightly
 notifications:
   email: false
-# uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("MacroTools"); Pkg.test("MacroTools"; coverage=true)'
+
+env:
+  global:
+    - DOCUMENTER_DEBUG=true
+
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.add(PackageSpec(path=pwd()))'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
+
+# uncomment this to enable test coverage
+# after_success:
+#   - julia -e 'import Pkg; cd(Pkg.dir("Luxor")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
