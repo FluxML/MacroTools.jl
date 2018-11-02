@@ -209,7 +209,7 @@ function longdef1(ex)
     @q function ($arg,) $(body.args...) end
   elseif isshortdef(ex)
     @assert @capture(ex, (fcall_ = body_))
-    striplines(Expr(:function, fcall, body))
+    Expr(:function, fcall, body)
   else
     ex
   end
