@@ -1,12 +1,22 @@
-mutable struct MatchError
+struct MatchError
   pat
   ex
 end
 
-nomatch(pat, ex) = throw(MatchError(pat, ex))
+macro nomatch(pat, ex)
+  :(return MatchError($(esc(pat)), $(esc(ex))))
+end
+
+macro trymatch(ex)
+  quote
+    r = $(esc(ex))
+    r isa MatchError && return r
+    r
+  end
+end
 
 function store!(env, name, ex)
-  haskey(env, name) && !(env[name] == ex) && nomatch(name, ex)
+  haskey(env, name) && !(env[name] == ex) && @nomatch(name, ex)
   assoc!(env, name, ex)
 end
 
@@ -18,7 +28,7 @@ function bname(s::Symbol)
 end
 
 function match_inner(pat, ex, env)
-  pat == ex || nomatch(pat, ex)
+  pat == ex || @nomatch(pat, ex)
   return env
 end
 
@@ -43,14 +53,14 @@ inrange(i, range, len) =
   range ≠ (0,0) && i ≥ range[1] && i ≤ len+1-range[2]
 
 function match_inner(pat::Expr, ex::Expr, env)
-  match(pat.head, ex.head, env)
+  @trymatch match(pat.head, ex.head, env)
   pat, ex = rmlines(pat), rmlines(ex)
   sr = slurprange(pat.args)
   slurp = Any[]
   i = 1
   for p in pat.args
     i > length(ex.args) &&
-      (isslurp(p) ? store!(env, bname(p), slurp) : nomatch(pat, ex))
+      (isslurp(p) ? @trymatch(store!(env, bname(p), slurp)) : @nomatch(pat, ex))
 
     while inrange(i, sr, length(ex.args))
       push!(slurp, ex.args[i])
@@ -58,13 +68,13 @@ function match_inner(pat::Expr, ex::Expr, env)
     end
 
     if isslurp(p)
-      p ≠ :__ && store!(env, bname(p), slurp)
+      p ≠ :__ && @trymatch store!(env, bname(p), slurp)
     else
-      match(p, ex.args[i], env)
+      @trymatch match(p, ex.args[i], env)
       i += 1
     end
   end
-  i == length(ex.args)+1 || nomatch(pat, ex)
+  i == length(ex.args)+1 || @nomatch(pat, ex)
   return env
 end
 
@@ -96,19 +106,10 @@ end
 
 match(pat, ex) = match(pat, ex, Dict())
 
-function ismatch(pat, ex)
-  try
-    match(pat, ex)
-    return true
-  catch e
-    isa(e, MatchError) ? (return false) : rethrow()
-  end
-end
+ismatch(pat, ex) = !(match(pat, ex) isa MatchError)
 
 function trymatch(pat, ex)
-  try
-    match(pat, ex)
-  catch e
-    isa(e, MatchError) ? (return) : rethrow()
-  end
+  r = match(pat, ex)
+  r isa MatchError && return
+  return r
 end
