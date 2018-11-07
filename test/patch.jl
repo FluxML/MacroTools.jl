@@ -66,6 +66,8 @@ testrep(:(1; 2; 3), """
   end
   """
 
+testrep(:(1; 2; 3), "(1; 2)") == "(1; 2; 3)"
+
 # Deletion
 
 @test testrep(:(f()), "f(a)") == "f()"
