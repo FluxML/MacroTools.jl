@@ -33,6 +33,39 @@ testrep(ex, text) = textmap(_ -> Expr(:file, ex), text)
 @test testrep(:(a+b+c), "a + b") == "a + b + c"
 @test testrep(:(a+b+c), "a+b") == "a+b+c"
 
+testrep(:(1; 2; 3), """
+  begin
+    1
+    2
+  end
+  """) == """
+  begin
+    1
+    2
+    3
+  end
+  """
+
+testrep(:(1; 2; 3), """
+  begin
+    1; 2
+  end
+  """) == """
+  begin
+    1; 2; 3
+  end
+  """
+
+testrep(:(1; 2; 3), """
+  begin
+    1; 2;
+  end
+  """) == """
+  begin
+    1; 2; 3;
+  end
+  """
+
 # Deletion
 
 @test testrep(:(f()), "f(a)") == "f()"

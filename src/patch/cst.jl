@@ -30,6 +30,11 @@ function separator(cst, loc, x::EXPR{Call}, i)
   separator_range(cst, CSTParser.child(loc, max(i-1,4)))
 end
 
+function separator(cst, loc, x::EXPR{CSTParser.Block}, i)
+  out, in = charrange(cst, CSTParser.child(loc, max(i-1,1)))
+  in[end]+1:out[end]
+end
+
 function separator(cst, loc, x::CSTParser.BinaryOpCall, i)
   separator_range(cst, CSTParser.child(loc, 2))
 end
@@ -64,7 +69,7 @@ function replacement(src::SourceFile, p::Insert)
   loc = expr_location(src.cst, p.idx)
   # TODO handle cases like this more generally
   src.cst[CSTParser.parent(loc)] isa EXPR{Call} && (loc.ii[end] = max(loc.ii[end], 2))
-  span, _ = charrange(src.cst, loc)
+  _, span = charrange(src.cst, loc)
   point = append ? span[end] : span[1]-1
   sep = separator(src.cst, loc)
   sep isa AbstractRange && (sep = src.text[sep])
