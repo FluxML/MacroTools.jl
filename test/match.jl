@@ -1,4 +1,4 @@
-@test postwalk(@q (@time 2+2)) do x  # issue #107
+@test MacroTools.postwalk(MacroTools.@q (@time 2+2)) do x  # issue #107
   @assert !MacroTools.isline(x)
   true
 end
