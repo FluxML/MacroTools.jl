@@ -60,10 +60,9 @@ Compare `quote end` vs `rmlines(quote end)`
 """
 rmlines(x) = x
 function rmlines(x::Expr)
-  # Do not strip the first argument to a macrocall, which is
-  # required.
+  # :macrocall has a LineNumberNode as second argument, which we replace by `nothing`
   if x.head == :macrocall && length(x.args) >= 2
-    Expr(x.head, x.args[1:2]..., filter(x->!isline(x), x.args[3:end])...)
+    Expr(x.head, x.args[1], nothing, filter(x->!isline(x), x.args[3:end])...)
   else
     Expr(x.head, filter(x->!isline(x), x.args)...)
   end
