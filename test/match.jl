@@ -1,3 +1,9 @@
+@test postwalk(@q (@time 2+2)) do x  # issue #107
+  @assert !MacroTools.isline(x)
+  true
+end
+
+
 let
   x = @match :(2+3) begin
     (a_+b_) => (a, b)
