@@ -50,6 +50,7 @@ expr_child_index(x::CSTParser.BinaryOpCall, i) = [2, 1, 3][i]
 expr_child_index(x::CSTParser.BinarySyntaxOpCall, i) = i+1
 expr_child_index(x::CSTParser.ConditionalOpCall, i) = i
 expr_child_index(x::EXPR{CSTParser.ChainOpCall}, i) = i == 1 ? 2 : 2(i-1)-1
+expr_child_index(x::EXPR{CSTParser.Using}, i) = i+1
 
 function expr_child!(ii, ex, i)
   j = expr_child_index(ex, i)
