@@ -16,4 +16,3 @@ docs/Manifest.toml
 _*.dat
 *.swp
 __pycache__/
-Manifest.toml
