@@ -27,7 +27,7 @@ function charrange(ex::AbstractEXPR, l::Location)
       ex = ex[i]
     end
     full = o .+ (1:ex.fullspan)
-    inner = o .+ ex.span
+    inner = o .+ (1:ex.span)
     return full, inner
 end
 
