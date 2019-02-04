@@ -1,4 +1,4 @@
-export @esc, isexpr, isline, rmlines, unblock, block, inexpr, namify, isdef,
+export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
   longdef, shortdef, @expand, makeif, prettify, splitdef, splitarg
 
 """
@@ -48,6 +48,8 @@ isexpr(x::Expr, ts...) = x.head in ts
 isexpr(x, ts...) = any(T->isa(T, Type) && isa(x, T), ts)
 
 isline(ex) = isexpr(ex, :line) || isa(ex, LineNumberNode)
+
+iscall(ex, f) = isexpr(ex, :call) && ex.args[1] == f
 
 """
     rmlines(x)
@@ -128,7 +130,10 @@ inside `expr`.
 function inexpr(ex, x)
   result = false
   MacroTools.postwalk(ex) do y
-    y == x && (result = true)
+    if y == x
+      result = true
+    end
+    return y
   end
   return result
 end
@@ -201,10 +206,10 @@ isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
 
 function longdef1(ex)
   if @capture(ex, (arg_ -> body_))
-    @q function ($arg,) $body end
+    @q function ($arg,) $(body.args...) end
   elseif isshortdef(ex)
     @assert @capture(ex, (fcall_ = body_))
-    striplines(Expr(:function, fcall, body))
+    Expr(:function, fcall, body)
   else
     ex
   end
@@ -213,12 +218,13 @@ longdef(ex) = prewalk(longdef1, ex)
 
 function shortdef1(ex)
   @match ex begin
-    function f_(args__) body_ end => @q $f($(args...)) = $body
-    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $body
-    function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $body
-    function (args__,) body_ end => @q ($(args...),) -> $body
+    function f_(args__) body_ end => @q $f($(args...)) = $(body.args...)
+    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $(body.args...)
+    function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $(body.args...)
+    function f_(args__)::rtype_ where T__ body_ end => @q ($f($(args...))::$rtype) where $(T...) = $(body.args...)
+    function (args__,) body_ end => @q ($(args...),) -> $(body.args...)
     ((args__,) -> body_) => ex
-    (arg_ -> body_) => @q ($arg,) -> $body
+    (arg_ -> body_) => @q ($arg,) -> $(body.args...)
     _ => ex
   end
 end
@@ -284,23 +290,38 @@ end
 `combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
 and returns a function definition. """
 function combinedef(dict::Dict)
-  rtype = get(dict, :rtype, :Any)
+  rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
   wparams = get(dict, :whereparams, [])
+  body = block(dict[:body])
   name = dict[:name]
   name_param = isempty(params) ? name : :($name{$(params...)})
   # We need the `if` to handle parametric inner/outer constructors like
   # SomeType{X}(x::X) where X = SomeType{X}(x, x+2)
   if isempty(wparams)
-    :(function $name_param($(dict[:args]...);
-                           $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-      end)
+    if rtype==nothing
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))
+        $(body.args...)
+        end)
+    else
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype
+        $(body.args...)
+        end)
+    end
   else
-    :(function $name_param($(dict[:args]...);
-                           $(dict[:kwargs]...))::$rtype where {$(wparams...)}
-      $(dict[:body])
-      end)
+    if rtype==nothing
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...)) where {$(wparams...)}
+        $(body.args...)
+        end)
+    else
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype where {$(wparams...)}
+        $(body.args...)
+        end)
+    end
   end
 end
 

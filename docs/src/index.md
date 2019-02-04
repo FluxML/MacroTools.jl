@@ -1,8 +1,7 @@
 # MacroTools.jl
 
-This library provides helpful tools for writing macros, notably a very simple
-but powerful templating system and some functions that have proven useful to me (see
-[utils.jl](src/utils.jl).)
+A library provides helpful tools for writing macros, notably a very simple but
+powerful templating system and some functions that have proven useful to me.
 
 ## Template Matching
 
@@ -239,6 +238,13 @@ such as `x::Int=2` and returns `(arg_name, arg_type, slurp, default)`. `default`
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
  (:y, :Any, false, nothing)  
  (:a, :Any, false, 2)        
- (:x, :Int, false, :nothing) 
+ (:x, :Int, false, :nothing)
  (:args, :Any, true, nothing)
+```
+
+## Function and Macros
+
+```@autodocs
+Modules = [MacroTools]
+Order = [:module, :constant, :type, :macro, :function]
 ```
