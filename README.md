@@ -1,5 +1,7 @@
 # MacroTools.jl
 
+[![Build Status](https://travis-ci.org/MikeInnes/MacroTools.jl.svg?branch=master)](https://travis-ci.org/MikeInnes/MacroTools.jl)
+
 This library provides helpful tools for writing macros, notably a very simple
 but powerful templating system and some functions that have proven useful to me (see
 [utils.jl](src/utils.jl).)
