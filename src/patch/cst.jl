@@ -117,12 +117,18 @@ function sourcemap(f, src::SourceFile)
   patch(src, diff(src.ast, ex))
 end
 
-# TODO directories
 function sourcemap(f, path::AbstractString)
-  isfile(path) || error("No file at $f")
+  isdir(path) && return sourcemap_dir(f, path)
+  isfile(path) || error("No file at $path")
   s = SourceFile(path)
   ex = striplines(f(s.ast))
   patch!(s, diff(s.ast, ex))
+end
+
+function sourcemap_dir(f, path)
+  for (dir, _, fs) in walkdir(path), file in fs
+    endswith(file, ".jl") && sourcemap(f, joinpath(dir, file))
+  end
 end
 
 sourcewalk(f, file) = sourcemap(x -> postwalk(f, x), file)

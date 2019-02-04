@@ -2,7 +2,7 @@ module MacroTools
 
 using DataStructures, Compat
 using Compat.Markdown
-export @match, @capture
+export @match, @capture, sourcewalk, sourcemap
 
 include("match/match.jl")
 include("match/types.jl")
