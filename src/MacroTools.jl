@@ -17,6 +17,7 @@ include("examples/threading.jl")
 include("examples/forward.jl")
 
 include("patch/diff.jl")
+include("patch/location.jl")
 include("patch/cst.jl")
 
 const animals = Symbol[]

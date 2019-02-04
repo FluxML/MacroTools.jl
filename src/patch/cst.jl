@@ -1,11 +1,11 @@
 using CSTParser
-using CSTParser: EXPR, Call, Location, expr_location, charrange
+using CSTParser: EXPR, Call
 
 expridx(x, ii) = (@assert isempty(ii); x)
 expridx(x::Expr, ii) = isempty(ii) ? x : expridx(x.args[ii[1]], ii[2:end])
 
 function precedence_level(cst::EXPR, loc::Location)
-  parent = cst[CSTParser.parent(loc)]
+  parent = cst[MacroTools.parent(loc)]
   if parent isa Union{CSTParser.BinaryOpCall,CSTParser.UnaryOpCall,CSTParser.ChainOpCall}
     Base.operator_precedence(Expr(parent).args[1])
   elseif parent isa Union{CSTParser.BinarySyntaxOpCall,CSTParser.UnarySyntaxOpCall}
@@ -18,29 +18,29 @@ end
 # Get the range at loc, including trailing trivia from the previous node.
 function separator_range(cst, loc)
   i = loc.ii[end]
-  loc = CSTParser.parent(loc)
-  start = charrange(cst, CSTParser.child(loc, i-1))[1][1]+1
-  stop = charrange(cst, CSTParser.child(loc, i))[1][end]
+  loc = MacroTools.parent(loc)
+  start = charrange(cst, child(loc, i-1))[1][1]+1
+  stop = charrange(cst, child(loc, i))[1][end]
   return start:stop
 end
 
 function separator(cst, loc, x::EXPR{Call}, i)
   length(x.args) == 3 && return ""
   length(x.args) == 4 && return ", "
-  separator_range(cst, CSTParser.child(loc, max(i-1,4)))
+  separator_range(cst, child(loc, max(i-1,4)))
 end
 
 function separator(cst, loc, x::EXPR{CSTParser.Block}, i)
-  out, in = charrange(cst, CSTParser.child(loc, max(i-1,1)))
+  out, in = charrange(cst, child(loc, max(i-1,1)))
   in[end]+1:out[end]
 end
 
 function separator(cst, loc, x::CSTParser.BinaryOpCall, i)
-  separator_range(cst, CSTParser.child(loc, 2))
+  separator_range(cst, child(loc, 2))
 end
 
 function separator(cst::EXPR, loc::Location)
-  parent = CSTParser.parent(loc)
+  parent = MacroTools.parent(loc)
   separator(cst, parent, cst[parent], loc.ii[end])
 end
 
@@ -68,7 +68,7 @@ function replacement(src::SourceFile, p::Insert)
   append && (p.idx[end] -= 1)
   loc = expr_location(src.cst, p.idx)
   # TODO handle cases like this more generally
-  src.cst[CSTParser.parent(loc)] isa EXPR{Call} && (loc.ii[end] = max(loc.ii[end], 2))
+  src.cst[MacroTools.parent(loc)] isa EXPR{Call} && (loc.ii[end] = max(loc.ii[end], 2))
   _, span = charrange(src.cst, loc)
   point = append ? span[end] : span[1]-1
   sep = separator(src.cst, loc)
