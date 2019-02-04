@@ -5,15 +5,15 @@ testrep(ex, text) = textmap(_ -> Expr(:file, ex), text)
 
 # Replacement
 
-@test textwalk(x -> x==:a ? :b : x, "a*2") == "b*2"
-@test textwalk(x -> x==:a ? :b : x, "a * 2") == "b * 2"
-@test textwalk(x -> x == :a ? 2 : x, "a * b * c") == "2 * b * c"
-@test textwalk(x -> x == :* ? :f : x, "a * b") == "f(a, b)"
+@test testrep(:(b*2), "a*2") == "b*2"
+@test testrep(:(b*2), "a * 2") == "b * 2"
+@test testrep(:(2*b*c), "a * b * c") == "2 * b * c"
+@test testrep(:(f(a, b)), "a * b") == "f(a, b)"
 
-@test textwalk(x -> x == :a ? :(a+1) : x, "a * 2") == "(a + 1) * 2"
-@test textwalk(x -> x == :a ? :(a+1) : x, "*(a, 2)") == "*(a + 1, 2)"
+@test testrep(:((a+1)*2), "a * 2") == "(a + 1) * 2"
+@test testrep(:((a+1)*2), "*(a, 2)") == "*(a + 1, 2)"
 
-@test textwalk(x -> x isa String ? :(uppercase($x)) : x, """
+@test testrep(:(bar(uppercase("baz"))), """
   bar("baz")
   """) == """
   bar(uppercase("baz"))
