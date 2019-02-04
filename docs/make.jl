@@ -13,10 +13,7 @@ makedocs(
 )
 
 deploydocs(
-    repo = "git@github.com:MikeInnes/MacroTools.jl.git",
+    repo = "MikeInnes/MacroTools.jl.git",
     target = "build",
     julia = "1.0",
-    osname = "linux",
-    deps = nothing,
-    make = nothing,
 )
