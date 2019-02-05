@@ -19,7 +19,7 @@ testrep(ex, text) = textmap(_ -> Expr(:file, ex), text)
   bar(uppercase("baz"))
   """
 
-@test_broken testrep(:(using Bar), "using Foo") == "using Bar"
+@test testrep(:(using Bar), "using Foo") == "using Bar"
 
 # Insertion
 
