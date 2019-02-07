@@ -59,6 +59,10 @@ end
 
 function replacement(src::SourceFile, p::Replace)
   loc = exprloc(src.ast, p.idx)
+  if loc == nothing
+    @warn "No location found for $(repr(CSTParser.striploc(expridx(src.ast, p.idx))))"
+    return
+  end
   prec = precedence_level(src.cst, loc)
   _, span = charrange(src.cst, loc)
   span => sprint(Base.show_unquoted, p.new, 0, prec)
@@ -90,7 +94,8 @@ function replacement(src::SourceFile, p::Delete)
   span => ""
 end
 
-replacement(src::SourceFile, p::Patch) = [replacement(src, p) for p in p.ps]
+replacement(src::SourceFile, p::Patch) =
+  filter(x -> x != nothing, [replacement(src, p) for p in p.ps])
 
 function patch(io::IO, src::SourceFile, rs)
   rs = sort(rs, by=x->first(x[1]))

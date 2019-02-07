@@ -5,7 +5,7 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[CSTParser]]
 deps = ["LibGit2", "Test", "Tokenize"]
-git-tree-sha1 = "82be55a328f39a11849569815a9f49911d6d7b58"
+git-tree-sha1 = "d878de3315f9b6569851d919f7976fe527d00c24"
 repo-rev = "location"
 repo-url = "https://github.com/MikeInnes/CSTParser.jl"
 uuid = "00ebfdb7-1f24-5e51-bd34-a7502290713f"
