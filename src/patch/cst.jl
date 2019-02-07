@@ -96,7 +96,7 @@ function patch(io::IO, src::SourceFile, rs)
   rs = sort(rs, by=x->first(x[1]))
   offset = 1
   for r in rs
-    print(io, src.text[(offset:first(r[1])-1)])
+    print(io, src.text[offset:prevind(src.text, first(r[1]))])
     print(io, r[2])
     offset = last(r[1])+1
   end
