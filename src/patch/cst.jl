@@ -107,8 +107,15 @@ patch(io::IO, src::SourceFile, p::Patch) = patch(io, src, replacement(src, p))
 patch(src::SourceFile, p) = sprint(patch, src, p)
 
 function patch!(src::SourceFile, p)
+  s = read(src.path)
   open(src.path, "w") do io
-    patch(io, src, p)
+    try
+      patch(io, src, p)
+    catch _
+      seek(io, 0)
+      write(io, s)
+      rethrow()
+    end
   end
 end
 
@@ -123,6 +130,7 @@ function sourcemap(f, path::AbstractString)
   s = SourceFile(path)
   ex = striplines(f(s.ast))
   patch!(s, diff(s.ast, ex))
+  return
 end
 
 function sourcemap_dir(f, path)
