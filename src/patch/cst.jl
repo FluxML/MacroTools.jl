@@ -1,8 +1,9 @@
 using CSTParser
-using CSTParser: EXPR, Call, Location, exprloc, charrange
+using CSTParser: EXPR, Call, Location, LocExpr, exprloc, charrange
 
 expridx(x, ii) = (@assert isempty(ii); x)
 expridx(x::Expr, ii) = isempty(ii) ? x : expridx(x.args[ii[1]], ii[2:end])
+expridx(x::LocExpr, ii) = expridx(x.expr, ii)
 
 function precedence_level(cst::EXPR, loc::Location)
   parent = cst[CSTParser.parent(loc)]
@@ -48,16 +49,16 @@ struct SourceFile
   path::String
   text::String
   cst::EXPR
-  ast::Expr
+  ast::LocExpr
 end
 
 function SourceFile(path::String, text = String(read(path)))
   cst = CSTParser.parse(text, true)
-  SourceFile(path, text, cst, Expr(cst))
+  SourceFile(path, text, cst, LocExpr(cst))
 end
 
 function replacement(src::SourceFile, p::Replace)
-  loc = exprloc(src.cst, p.idx)
+  loc = exprloc(src.ast, p.idx)
   prec = precedence_level(src.cst, loc)
   _, span = charrange(src.cst, loc)
   span => sprint(Base.show_unquoted, p.new, 0, prec)
@@ -66,7 +67,7 @@ end
 function replacement(src::SourceFile, p::Insert)
   append = p.idx[end] > length(expridx(src.ast, p.idx[1:end-1]).args)
   append && (p.idx[end] -= 1)
-  loc = exprloc(src.cst, p.idx)
+  loc = exprloc(src.ast, p.idx)
   # TODO handle cases like this more generally
   src.cst[CSTParser.parent(loc)] isa EXPR{Call} && (loc.ii[end] = max(loc.ii[end], 2))
   _, span = charrange(src.cst, loc)
@@ -81,7 +82,7 @@ function replacement(src::SourceFile, p::Insert)
 end
 
 function replacement(src::SourceFile, p::Delete)
-  loc = exprloc(src.cst, p.idx)
+  loc = exprloc(src.ast, p.idx)
   span, _ = charrange(src.cst, loc)
   sep = separator(src.cst, loc)
   sep isa AbstractRange || (sep = span)
@@ -120,16 +121,18 @@ function patch!(src::SourceFile, p)
 end
 
 function sourcemap(f, src::SourceFile)
-  ex = striplines(f(src.ast))
-  patch(src, diff(src.ast, ex))
+  expr = CSTParser.striploc(src.ast)
+  ex = striplines(f(expr))
+  patch(src, diff(expr, ex))
 end
 
 function sourcemap(f, path::AbstractString)
   isdir(path) && return sourcemap_dir(f, path)
   isfile(path) || error("No file at $path")
   s = SourceFile(path)
-  ex = striplines(f(s.ast))
-  patch!(s, diff(s.ast, ex))
+  expr = CSTParser.striploc(s.ast)
+  ex = striplines(f(expr))
+  patch!(s, diff(expr, ex))
   return
 end
 
