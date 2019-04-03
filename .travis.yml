@@ -10,10 +10,6 @@ matrix:
 notifications:
   email: false
 
-env:
-  global:
-    - DOCUMENTER_DEBUG=true
-
 jobs:
   include:
     - stage: "Documentation"
