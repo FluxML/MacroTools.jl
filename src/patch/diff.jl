@@ -118,6 +118,7 @@ function fdiff(head, ii, f1, f2)
 end
 
 diff(ii, x1, x2) =
+  (x1,x2) isa NTuple{2,Union{LineNumberNode,Nothing}} ? Patch([]) :
   shouldreplace(x1, x2)  ? Patch([Replace(ii, x1, x2)]) :
   x1 == x2               ? Patch([]) :
   fdiff(x1.head, ii, x1.args, x2.args)
