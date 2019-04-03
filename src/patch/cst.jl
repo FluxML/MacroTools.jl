@@ -168,7 +168,10 @@ end
 
 function sourcemap_dir(f, path)
   for (dir, _, fs) in walkdir(path), file in fs
-    endswith(file, ".jl") && sourcemap(f, joinpath(dir, file))
+    if endswith(file, ".jl")
+      @info "SourceWalk: processing $file"
+      sourcemap(f, joinpath(dir, file))
+    end
   end
 end
 
