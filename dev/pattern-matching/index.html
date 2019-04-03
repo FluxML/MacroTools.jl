@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Pattern Matching · MacroTools</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>MacroTools</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li class="current"><a class="toctext" href>Pattern Matching</a><ul class="internal"><li><a class="toctext" href="#Expression-Walking-1">Expression Walking</a></li></ul></li><li><a class="toctext" href="../utilities/">Utilities</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href>Pattern Matching</a></li></ul><a class="edit-page" href="https://github.com/MikeInnes/MacroTools.jl/blob/master/docs/src/pattern-matching.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Pattern Matching</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Pattern-Matching-1" href="#Pattern-Matching-1">Pattern Matching</a></h1><p>With pattern matching enables macro writers to deconstruct Julia expressions in a more declarative way, and without having to know in great detail how syntax is represented internally. For example, say you have a type definition:</p><pre><code class="language-julia">ex = quote
+  struct Foo
+    x::Int
+    y
+  end
+end</code></pre><p>If you know what you&#39;re doing, you can pull out the name and fields via:</p><pre><code class="language-julia">julia&gt; if isexpr(ex.args[2], :struct)
+         (ex.args[2].args[2], ex.args[2].args[3].args)
+       end
+(:Foo,{:( # line 3:),:(x::Int),:( # line 4:),:y})</code></pre><p>But this is hard to write – since you have to deconstruct the <code>type</code> expression by hand – and hard to read, since you can&#39;t tell at a glance what&#39;s being achieved. On top of that, there&#39;s a bunch of messy stuff to deal with like pesky <code>begin</code> blocks which wrap a single expression, line numbers, etc. etc.</p><p>Enter MacroTools:</p><pre><code class="language-julia">julia&gt; using MacroTools
+
+julia&gt; @capture(ex, struct T_ fields__ end)
+true
+
+julia&gt; T, fields
+(:Foo, [:(x::Int), :y])</code></pre><p>Symbols like <code>T_</code> underscore are treated as catchalls which match any expression, and the expression they match is bound to the (underscore-less) variable, as above.</p><p>Because <code>@capture</code> doubles as a test as well as extracting values, you can easily handle unexpected input (try writing this by hand):</p><pre><code class="language-julia">@capture(ex, f_{T_}(xs__) = body_) ||
+  error(&quot;expected a function with a single type parameter&quot;)</code></pre><p>Symbols like <code>f__</code> (double underscored) are similar, but slurp a sequence of arguments into an array. For example:</p><pre><code class="language-julia">julia&gt; @capture(:[1, 2, 3, 4, 5, 6, 7], [1, a_, 3, b__, c_])
+true
+
+julia&gt; a, b, c
+(2,[4,5,6],7)</code></pre><p>Slurps don&#39;t have to be at the end of an expression, but like the Highlander there can only be one (per expression).</p><h3><a class="nav-anchor" id="Matching-on-expression-type-1" href="#Matching-on-expression-type-1">Matching on expression type</a></h3><p><code>@capture</code> can match expressions by their type, which is either the <code>head</code> of <code>Expr</code> objects or the <code>typeof</code> atomic stuff like <code>Symbol</code>s and <code>Int</code>s. For example:</p><pre><code class="language-julia">@capture(ex, foo(x_String_string))</code></pre><p>This will match a call to the <code>foo</code> function which has a single argument, which may either be a <code>String</code> object or a <code>Expr(:string, ...)</code> (e.g. <code>@capture(:(foo(&quot;$(a)&quot;)), foo(x_String_string))</code>). Julia string literals may be parsed into either type of object, so this is a handy way to catch both.</p><p>Another common use case is to catch symbol literals, e.g.</p><pre><code class="language-julia">@capture(ex,
+  struct T_Symbol
+    fields__
+  end)</code></pre><p>which will match e.g. <code>struct Foo ...</code> but not <code>struct Foo{V} ...</code></p><h3><a class="nav-anchor" id="Unions-1" href="#Unions-1">Unions</a></h3><p><code>@capture</code> can also try to match the expression against one pattern or another, for example:</p><pre><code class="language-julia">@capture(ex, f_(args__) = body_ | function f_(args__) body_ end)</code></pre><p>will match both kinds of function syntax (though it&#39;s easier to use <code>shortdef</code> to normalise definitions). You can also do this within expressions, e.g.</p><pre><code class="language-julia">@capture(ex, (f_{T_}|f_)(args__) = body_)</code></pre><p>matches a function definition, with a single type parameter bound to <code>T</code> if possible. If not, <code>T = nothing</code>.</p><h2><a class="nav-anchor" id="Expression-Walking-1" href="#Expression-Walking-1">Expression Walking</a></h2><p>If you&#39;ve ever written any more interesting macros, you&#39;ve probably found yourself writing recursive functions to work with nested <code>Expr</code> trees. MacroTools&#39; <code>prewalk</code> and <code>postwalk</code> functions factor out the recursion, making macro code much more concise and robust.</p><p>These expression-walking functions essentially provide a kind of find-and-replace for expression trees. For example:</p><pre><code class="language-julia">julia&gt; using MacroTools: prewalk, postwalk
+
+julia&gt; postwalk(x -&gt; x isa Integer ? x + 1 : x, :(2+3))
+:(3 + 4)</code></pre><p>In other words, look at each item in the tree; if it&#39;s an integer, add one, if not, leave it alone.</p><p>We can do more complex things if we combine this with <code>@capture</code>. For example, say we want to insert an extra argument into all function calls:</p><pre><code class="language-julia">julia&gt; ex = quote
+         x = f(y, g(z))
+         return h(x)
+       end
+
+julia&gt; postwalk(x -&gt; @capture(x, f_(xs__)) ? :($f(5, $(xs...))) : x, ex)
+quote  # REPL[20], line 2:
+    x = f(5, y, g(5, z)) # REPL[20], line 3:
+    return h(5, x)
+end</code></pre><p>Most of the time, you can use <code>postwalk</code> without worrying about it, but we also provide <code>prewalk</code>. The difference is the order in which you see sub-expressions; <code>postwalk</code> sees the leaves of the <code>Expr</code> tree first and the whole expression last, while <code>prewalk</code> is the opposite.</p><pre><code class="language-julia">julia&gt; postwalk(x -&gt; @show(x) isa Integer ? x + 1 : x, :(2+3*4));
+x = :+
+x = 2
+x = :*
+x = 3
+x = 4
+x = :(4 * 5)
+x = :(3 + 4 * 5)
+
+julia&gt; prewalk(x -&gt; @show(x) isa Integer ? x + 1 : x, :(2+3*4));
+x = :(2 + 3 * 4)
+x = :+
+x = 2
+x = :(3 * 4)
+x = :*
+x = 3
+x = 4</code></pre><p>A significant difference is that <code>prewalk</code> will walk into whatever expression you return.</p><pre><code class="language-julia">julia&gt; postwalk(x -&gt; @show(x) isa Integer ? :(a+b) : x, 2)
+x = 2
+:(a + b)
+
+julia&gt; prewalk(x -&gt; @show(x) isa Integer ? :(a+b) : x, 2)
+x = 2
+x = :+
+x = :a
+x = :b
+:(a + b)</code></pre><p>This makes it somewhat more prone to infinite loops; for example, if we returned <code>:(1+b)</code> instead of <code>:(a+b)</code>, <code>prewalk</code> would hang trying to expand all of the <code>1</code>s in the expression.</p><p>With these tools in hand, a useful general pattern for macros is:</p><pre><code class="language-julia">macro foo(ex)
+  postwalk(ex) do x
+    @capture(x, some_pattern) || return x
+    return new_x
+  end
+end</code></pre><footer><hr/><a class="previous" href="../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../utilities/"><span class="direction">Next</span><span class="title">Utilities</span></a></footer></article></body></html>
