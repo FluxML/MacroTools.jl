@@ -7,8 +7,6 @@
 docs/build/
 docs/site/
 
-docs/Manifest.toml
-
 *.ipynb_checkpoints
 **/*.ipynb_checkpoints
 **/**/*.ipynb_checkpoints

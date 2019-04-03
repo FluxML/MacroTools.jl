@@ -87,7 +87,7 @@ end
 block(ex) = isexpr(ex, :block) ? ex : :($ex;)
 
 """
-An easy way to get pull the (function/type) name out of
+An easy way to get the (function/type) name out of
 expressions like `foo{T}` or `Bar{T} <: Vector{T}`.
 """
 namify(s::Symbol) = s
@@ -152,7 +152,13 @@ end
 """
     gensym_ids(expr)
 
-Replaces gensyms with unique ids (deterministically)
+Replaces gensyms with unique ids (deterministically).
+
+    julia> x, y = gensym("x"), gensym("y")
+    (Symbol("##x#363"), Symbol("##y#364"))
+
+    julia> MacroTools.gensym_ids(:(\$x+\$y))
+    :(x_1 + y_2)
 """
 function gensym_ids(ex)
   counter = 0
@@ -167,8 +173,14 @@ end
 """
     alias_gensyms(expr)
 
-Replaces gensyms with animal names
+Replaces gensyms with animal names.
 This makes gensym'd code far easier to follow.
+
+    julia> x, y = gensym("x"), gensym("y")
+    (Symbol("##x#363"), Symbol("##y#364"))
+
+    julia> MacroTools.alias_gensyms(:(\$x+\$y))
+    :(porcupine + gull)
 """
 function alias_gensyms(ex)
   left = copy(animals)
@@ -386,6 +398,11 @@ function flatten1(ex)
   return length(ex′.args) == 1 ? ex′.args[1] : ex′
 end
 
+"""
+    flatten(ex)
+
+Flatten any redundant blocks into a single block, over the whole expression.
+"""
 flatten(ex) = postwalk(flatten1, ex)
 
 function makeif(clauses, els = nothing)

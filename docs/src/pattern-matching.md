@@ -1,17 +1,8 @@
-# MacroTools.jl
+# Pattern Matching
 
-[![Build Status](https://travis-ci.org/MikeInnes/MacroTools.jl.svg?branch=master)](https://travis-ci.org/MikeInnes/MacroTools.jl)
-
-This library provides helpful tools for writing macros, notably a very simple
-but powerful templating system and some functions that have proven useful to me (see
-[utils.jl](src/utils.jl).)
-
-## Template Matching
-
-Template matching enables macro writers to deconstruct Julia
-expressions in a more declarative way, and without having to know in
-great detail how syntax is represented internally. For example, say you
-have a type definition:
+With pattern matching enables macro writers to deconstruct Julia expressions in a
+more declarative way, and without having to know in great detail how syntax is
+represented internally. For example, say you have a type definition:
 
 ```julia
 ex = quote
@@ -208,39 +199,4 @@ macro foo(ex)
     return new_x
   end
 end
-```
-
-## Function definitions
-
-`splitdef(def)` matches a function definition of the form
-
-```julia
-function name{params}(args; kwargs)::rtype where {whereparams}
-   body
-end
-```
-
-and returns `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
-calling `MacroTools.combinedef(dict)`, or explicitly with
-
-```julia
-rtype = get(dict, :rtype, :Any)
-all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                            $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-  end)
-```
-
-`splitarg(arg)` matches function arguments (whether from a definition or a function call)
-such as `x::Int=2` and returns `(arg_name, arg_type, slurp, default)`. `default` is
-`nothing` when there is none. For example:
-
-```julia
-> map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
-4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
- (:y, :Any, false, nothing)  
- (:a, :Any, false, 2)        
- (:x, :Int, false, :nothing) 
- (:args, :Any, true, nothing)
 ```

@@ -1,9 +1,7 @@
 language: julia
 os:
   - linux
-  - osx
 julia:
-  - 0.6
   - 1.0
   - nightly
 matrix:
@@ -11,10 +9,6 @@ matrix:
     - julia: nightly
 notifications:
   email: false
-
-env:
-  global:
-    - DOCUMENTER_DEBUG=true
 
 jobs:
   include:
