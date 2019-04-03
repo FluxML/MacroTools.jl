@@ -1,8 +1,8 @@
 module MacroTools
 
-using Compat
+using DataStructures, Compat
 using Compat.Markdown
-export @match, @capture
+export @match, @capture, sourcewalk, sourcemap
 
 include("match/match.jl")
 include("match/types.jl")
@@ -15,6 +15,13 @@ include("structdef.jl")
 include("examples/destruct.jl")
 include("examples/threading.jl")
 include("examples/forward.jl")
+
+using CSTParser
+
+if isdefined(CSTParser, :Location)
+  include("patch/diff.jl")
+  include("patch/cst.jl")
+end
 
 const animals = Symbol[]
 const animals_file = joinpath(@__DIR__, "..", "animals.txt")
