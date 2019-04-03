@@ -79,3 +79,12 @@ testrep(:(1; 2; 3), "(1; 2)") == "(1; 2; 3)"
 @test testrep(:(f(a, c)), "f(a, b, c)") == "f(a, c)"
 @test testrep(:(f(b, c)), "f(a, b, c)") == "f(b, c)"
 @test testrep(:(a(b, c)), "f(a, b, c)") == "a(b, c)"
+
+# Others
+
+@test testrep(:(@foo a), "@foo a b") == "@foo a"
+@test testrep(:(@foo a b c), "@foo a b") == "@foo a b c"
+@test testrep(:(@foo a b c), "@foo(a, b)") == "@foo(a, b, c)"
+
+@test testrep(:(a,), "(a, b)") == "(a)"
+@test testrep(:(a,b,c), "a, b") == "a, b, c"

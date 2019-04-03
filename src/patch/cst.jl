@@ -31,6 +31,31 @@ function separator(cst, loc, x::EXPR{Call}, i)
   separator_range(cst, loc[max(i-1,4)])
 end
 
+function separator(cst, loc, x::EXPR{CSTParser.MacroCall}, i)
+  if get(x.args, 2, nothing) isa CSTParser.PUNCTUATION # @foo(a, b)
+    length(x.args) == 3 && return ""
+    length(x.args) == 4 && return ", "
+    separator_range(cst, loc[max(i-1,4)])
+  else                                   # @foo a b
+    length(x.args) == 1 && return " "
+    outer, inner = charrange(cst, loc[i-1])
+    inner[end]+1:outer[end]
+  end
+end
+
+function separator(cst, loc, x::EXPR{CSTParser.TupleH}, i)
+  brackets = x.args[1] isa CSTParser.PUNCTUATION
+  length(x.args) == 2brackets && return ""
+  length(x.args) == 1+2brackets && return ", "
+  separator_range(cst, loc[max(i-1,2+brackets)])
+end
+
+ex = CSTParser.parse("a, b")
+separator(ex, CSTParser.Location(), ex, 1)
+
+ex = CSTParser.parse("(a,)")
+separator(ex, CSTParser.Location(), ex, 2)
+
 function separator(cst, loc, x::EXPR{CSTParser.Block}, i)
   out, in = charrange(cst, loc[max(i-1,1)])
   in[end]+1:out[end]
