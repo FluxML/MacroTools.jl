@@ -3,9 +3,7 @@ using Documenter, MacroTools
 makedocs(
     sitename = "MacroTools",
     pages = [
-        "Home" => "index.md"],
-    format=:html)
+        "Home" => "index.md"])
 
 deploydocs(
-    repo = "github.com/MikeInnes/MacroTools.jl.git",
-    julia="1.0")
+  repo = "github.com/MikeInnes/MacroTools.jl.git",)
