@@ -30,7 +30,7 @@ then our file will have changed to
 
 ```julia
 # test.jl
-foo(a, b)
+bar(a, b)
 ```
 
 You can also pass `sourcewalk` a directory, and it will work on all `.jl` files
