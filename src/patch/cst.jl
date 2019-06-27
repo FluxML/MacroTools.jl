@@ -167,8 +167,8 @@ function sourcemap(f, path::AbstractString)
 end
 
 function sourcemap_dir(f, path)
-  for (dir, _, fs) in walkdir(path), file in fs
-    if endswith(file, ".jl")
+  @sync for (dir, _, fs) in walkdir(path), file in fs
+    @async if endswith(file, ".jl")
       @info "SourceWalk: processing $file"
       sourcemap(f, joinpath(dir, file))
     end
