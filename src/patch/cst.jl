@@ -1,5 +1,5 @@
-using CSTParser
-using CSTParser: EXPR, Call, Location, LocExpr, exprloc, charrange
+using .CSTParser
+using .CSTParser: EXPR, Call, Location, LocExpr, exprloc, charrange
 
 expridx(x, ii) = (@assert isempty(ii); x)
 expridx(x::Expr, ii) = isempty(ii) ? x : expridx(x.args[ii[1]], ii[2:end])

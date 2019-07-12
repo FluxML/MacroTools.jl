@@ -16,12 +16,12 @@ include("examples/destruct.jl")
 include("examples/threading.jl")
 include("examples/forward.jl")
 
-using CSTParser
+include("cstparser/CSTParser.jl")
 
-if isdefined(CSTParser, :Location)
-  include("patch/diff.jl")
-  include("patch/cst.jl")
-end
+using .CSTParser
+
+include("patch/diff.jl")
+include("patch/cst.jl")
 
 const animals = Symbol[]
 const animals_file = joinpath(@__DIR__, "..", "animals.txt")
