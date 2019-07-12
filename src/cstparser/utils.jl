@@ -9,7 +9,7 @@ function closer(ps::ParseState)
         ps.nt.kind == Tokens.LBRACE ||
         ps.nt.kind == Tokens.LSQUARE ||
         (ps.nt.kind == Tokens.STRING && isemptyws(ps.ws)) ||
-        ((ps.nt.kind == Tokens.RPAREN || ps.nt.kind == Tokens.RSQUARE) && isidentifier(ps.nt))  
+        ((ps.nt.kind == Tokens.RPAREN || ps.nt.kind == Tokens.RSQUARE) && isidentifier(ps.nt))
     )) ||
     (ps.nt.kind == Tokens.COMMA && ps.closer.precedence > 0) ||
     ps.nt.kind == Tokens.ENDMARKER ||
@@ -20,10 +20,10 @@ function closer(ps::ParseState)
     (ps.closer.paren && ps.nt.kind == Tokens.RPAREN) ||
     (ps.closer.brace && ps.nt.kind == Tokens.RBRACE) ||
     (ps.closer.square && ps.nt.kind == Tokens.RSQUARE) ||
-    ps.nt.kind == Tokens.ELSEIF || 
+    ps.nt.kind == Tokens.ELSEIF ||
     ps.nt.kind == Tokens.ELSE ||
-    ps.nt.kind == Tokens.CATCH || 
-    ps.nt.kind == Tokens.FINALLY || 
+    ps.nt.kind == Tokens.CATCH ||
+    ps.nt.kind == Tokens.FINALLY ||
     (ps.closer.ifop && isoperator(ps.nt) && (precedence(ps.nt) <= 0 || ps.nt.kind == Tokens.COLON)) ||
     (ps.closer.range && (ps.nt.kind == Tokens.FOR || iscomma(ps.nt) || ps.nt.kind == Tokens.IF)) ||
     (ps.closer.ws && !isemptyws(ps.ws) &&
@@ -32,7 +32,7 @@ function closer(ps::ParseState)
         !(!ps.closer.inmacro && ps.nt.kind == Tokens.FOR) &&
         !(ps.nt.kind == Tokens.DO) &&
         !(
-            (isbinaryop(ps.nt) && !(isemptyws(ps.nws) && isunaryop(ps.nt) && ps.closer.wsop)) || 
+            (isbinaryop(ps.nt) && !(isemptyws(ps.nws) && isunaryop(ps.nt) && ps.closer.wsop)) ||
             (isunaryop(ps.t) && ps.ws.kind == WS)
         )) ||
     (ps.nt.startbyte ≥ ps.closer.stop) ||
@@ -209,8 +209,6 @@ end
 
 isidentifier(t::AbstractToken) = t.kind == Tokens.IDENTIFIER
 
-isliteral(t::AbstractToken) = Tokens.begin_literal < t.kind < Tokens.end_literal
-
 isbool(t::AbstractToken) =  Tokens.TRUE ≤ t.kind ≤ Tokens.FALSE
 iscomma(t::AbstractToken) =  t.kind == Tokens.COMMA
 
@@ -224,7 +222,7 @@ isinstance(t::AbstractToken) = isidentifier(t) ||
 
 ispunctuation(t::AbstractToken) = t.kind == Tokens.COMMA ||
                           t.kind == Tokens.END ||
-                          Tokens.LSQUARE ≤ t.kind ≤ Tokens.RPAREN || 
+                          Tokens.LSQUARE ≤ t.kind ≤ Tokens.RPAREN ||
                           t.kind == Tokens.AT_SIGN
 
 isstring(x) = false
@@ -235,7 +233,7 @@ is_float(x) = x isa LITERAL && x.kind == Tokens.FLOAT
 is_number(x) = x isa LITERAL && (x.kind == Tokens.INTEGER || x.kind == Tokens.FLOAT)
 is_nothing(x) = x isa LITERAL && x.kind == Tokens.NOTHING
 
-isajuxtaposition(ps::ParseState, ret) = ((is_number(ret) && (ps.nt.kind == Tokens.IDENTIFIER || ps.nt.kind == Tokens.LPAREN || ps.nt.kind == Tokens.CMD || ps.nt.kind == Tokens.STRING || ps.nt.kind == Tokens.TRIPLE_STRING)) || 
+isajuxtaposition(ps::ParseState, ret) = ((is_number(ret) && (ps.nt.kind == Tokens.IDENTIFIER || ps.nt.kind == Tokens.LPAREN || ps.nt.kind == Tokens.CMD || ps.nt.kind == Tokens.STRING || ps.nt.kind == Tokens.TRIPLE_STRING)) ||
         ((ret isa UnarySyntaxOpCall && is_prime(ret.arg2) && ps.nt.kind == Tokens.IDENTIFIER) ||
         ((ps.t.kind == Tokens.RPAREN || ps.t.kind == Tokens.RSQUARE) && (ps.nt.kind == Tokens.IDENTIFIER || ps.nt.kind == Tokens.CMD)) ||
         ((ps.t.kind == Tokens.STRING || ps.t.kind == Tokens.TRIPLE_STRING) && (ps.nt.kind == Tokens.STRING || ps.nt.kind == Tokens.TRIPLE_STRING)))) || ((ps.t.kind in (Tokens.INTEGER, Tokens.FLOAT) || ps.t.kind in (Tokens.RPAREN,Tokens.RSQUARE,Tokens.RBRACE)) && ps.nt.kind == Tokens.IDENTIFIER)
@@ -386,7 +384,7 @@ function check_file(file, ret, neq)
     str = read(file, String)
     x0, cstfailed, sp = cst_parsefile(str)
     x1, flispfailed = flisp_parsefile(str)
-    
+
     print("\r                             ")
     if !isempty(sp)
         printstyled(file, color = :blue)
@@ -408,7 +406,7 @@ function check_file(file, ret, neq)
         printstyled(string("    ", c1), bold = true, color = :light_green)
         println()
         push!(ret, (file, :noteq))
-    end    
+    end
 end
 
 function check_base(dir = dirname(Base.find_source_file("essentials.jl")), display = false)
@@ -428,7 +426,7 @@ function check_base(dir = dirname(Base.find_source_file("essentials.jl")), displ
                 N += 1
                 try
                     print("\r", rpad(string(N), 5), rpad(string(round(fail / N * 100, sigdigits = 3)), 8), rpad(string(round(err / N * 100, sigdigits = 3)), 8), rpad(string(round(neq / N * 100, sigdigits = 3)), 8))
-                    
+
                     check_file(file, ret, neq)
                 catch er
                     isa(er, InterruptException) && rethrow(er)
@@ -495,7 +493,7 @@ of its components. Returns a vector of failing expressions.
 function check_span(x::EXPR{StringH}, neq = []) end
 function check_span(x::T, neq = []) where T <: Union{IDENTIFIER,LITERAL,OPERATOR,KEYWORD,PUNCTUATION} neq end
 
-function check_span(x::UnaryOpCall, neq = []) 
+function check_span(x::UnaryOpCall, neq = [])
     check_span(x.op)
     check_span(x.arg)
     if x.op.fullspan + x.arg.fullspan != x.fullspan
@@ -503,7 +501,7 @@ function check_span(x::UnaryOpCall, neq = [])
     end
     neq
 end
-function check_span(x::UnarySyntaxOpCall, neq = []) 
+function check_span(x::UnarySyntaxOpCall, neq = [])
     check_span(x.arg1)
     check_span(x.arg2)
     if x.arg1.fullspan + x.arg2.fullspan != x.fullspan
@@ -619,7 +617,7 @@ Base.iterate(x::BinaryOpCall, s) = s > 2 ? nothing : (getfield(x, s + 1), s + 1)
 Base.length(x::BinaryOpCall) = 3
 
 Base.iterate(x::WhereOpCall) = x.arg1, 1
-function Base.iterate(x::WhereOpCall, s) 
+function Base.iterate(x::WhereOpCall, s)
     if s == 1
         return x.op, 2
     elseif s < length(x)
@@ -703,5 +701,3 @@ function _unescape_string(io, s::AbstractString)
         end
     end
 end
-
-

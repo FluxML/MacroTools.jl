@@ -43,10 +43,6 @@ precedence(x::AbstractToken) = precedence(x.kind)
 precedence(x::OPERATOR) = precedence(x.kind)
 
 
-isoperator(kind) = Tokens.begin_ops < kind < Tokens.end_ops
-isoperator(t::AbstractToken) = isoperator(t.kind)
-
-
 isunaryop(op) = false
 isunaryop(op::OPERATOR) = isunaryop(op.kind)
 isunaryop(t::AbstractToken) = isunaryop(t.kind)
@@ -243,7 +239,7 @@ end
 # Parse power (special case for preceding unary ops)
 function parse_operator_power(ps::ParseState, @nospecialize(ret), op)
     nextarg = @precedence ps PowerOp - LtoR(PowerOp) @closer ps inwhere parse_expression(ps)
-    
+
     if ret isa UnaryOpCall
         nextarg = BinaryOpCall(ret.arg, op, nextarg)
         ret = UnaryOpCall(ret.op, nextarg)
@@ -257,7 +253,7 @@ end
 # parse where
 function parse_operator_where(ps::ParseState, @nospecialize(ret), op)
     nextarg = @precedence ps LazyAndOp @closer ps inwhere parse_expression(ps)
-    
+
     if nextarg isa EXPR{Braces}
         args = nextarg.args
     else
@@ -286,7 +282,7 @@ function parse_operator_dot(ps::ParseState, @nospecialize(ret), op)
         if ps.nt.kind == Tokens.LPAREN
             nextarg = @closeparen ps @precedence ps DotOp - LtoR(DotOp) parse_expression(ps)
             nextarg = EXPR{Quote}(Any[op2, nextarg])
-        else    
+        else
             nextarg = @precedence ps DotOp - LtoR(DotOp) parse_unary(ps, op2)
         end
     elseif ps.nt.kind == Tokens.EX_OR && ps.nnt.kind == Tokens.LPAREN
@@ -312,7 +308,7 @@ end
 
 function parse_operator_anon_func(ps::ParseState, @nospecialize(ret), op)
     arg = @closer ps comma @precedence ps 0 parse_expression(ps)
-    
+
     if !(arg isa EXPR{Begin} || (arg isa EXPR{InvisBrackets} && arg.args[2] isa EXPR{Block}))
         arg = EXPR{Block}(Any[arg])
     end
@@ -352,7 +348,7 @@ function parse_operator(ps::ParseState, @nospecialize(ret), op)
     else
         ltor = K == Tokens.LPIPE ? true : LtoR(P)
         nextarg = @precedence ps P - ltor parse_expression(ps)
-        
+
         if issyntaxcall(op)
             ret = BinarySyntaxOpCall(ret, op, nextarg)
         else

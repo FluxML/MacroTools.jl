@@ -18,6 +18,8 @@ include("examples/forward.jl")
 
 include("cstparser/CSTParser.jl")
 
+module hack; using CSTParser; end
+
 using .CSTParser
 
 include("patch/diff.jl")
