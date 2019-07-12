@@ -6,9 +6,6 @@ using Compat, Compat.Test
 include("match.jl")
 include("split.jl")
 include("destruct.jl")
-
-if isdefined(MacroTools, :sourcewalk)
-  include("patch.jl")
-end
+include("patch.jl")
 
 end
