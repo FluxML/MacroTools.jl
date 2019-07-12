@@ -4,13 +4,6 @@ Pattern matching is really useful if you're writing macros, but it also works
 on Julia source code files. You can try this with the `sourcewalk` function,
 which behaves like `postwalk` but with a source file as input.
 
-!!! note
-
-    To use this functionality you currently need to a fork of CSTParser.
-    ```julia
-    ] add https://github.com/MikeInnes/CSTParser.jl#location
-    ```
-
 For example, if we have a file like
 
 ```julia
