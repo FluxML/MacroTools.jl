@@ -303,6 +303,8 @@ function splitdef(fdef)
   di
 end
 
+splitdef(::Nothing) = @assert(false, "Not a function definition: nothing")
+
 
 """
     combinedef(dict::Dict)
