@@ -271,15 +271,15 @@ function name{params}(args; kwargs)::rtype where {whereparams}
 end
 ```
 
-and return `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
-calling `MacroTools.combinedef(dict)`, or explicitly with
+and return `(; name=..., args=..., etc.)`. The definition can be rebuilt by
+calling `MacroTools.combinedef(defparts)`, or explicitly with
 
 ```
-rtype = get(dict, :rtype, :Any)
-all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function \$(dict[:name]){\$(all_params...)}(\$(dict[:args]...);
-                                            \$(dict[:kwargs]...))::\$rtype
-      \$(dict[:body])
+rtype = get(defparts, :rtype, :Any)
+all_params = [get(defparts, :params, [])..., get(defparts, :whereparams, [])...]
+:(function \$(defparts[:name]){\$(all_params...)}(\$(defparts[:args]...);
+                                            \$(defparts[:kwargs]...))::\$rtype
+      \$(defparts[:body])
   end)
 ```
 """
@@ -295,21 +295,21 @@ function splitdef(fdef)
                                    (func_(args__)::rtype_))),
           error_msg)
   @assert(@capture(func, (fname_{params__} | fname_)), error_msg)
-  di = Dict(:name=>fname, :args=>args,
-            :kwargs=>(kwargs===nothing ? [] : kwargs), :body=>body)
-  if rtype !== nothing; di[:rtype] = rtype end
-  if whereparams !== nothing; di[:whereparams] = whereparams end
-  if params !== nothing; di[:params] = params end
-  di
+  di = (; name=fname, args=args,
+            kwargs=(kwargs===nothing ? [] : kwargs), body=body)
+  if rtype !== nothing; di=(di..., rtype=rtype) end
+  if whereparams !== nothing; di=(di..., whereparams=whereparams) end
+  if params !== nothing; di=(di..., params=params) end
+  return di
 end
 
 
 """
-    combinedef(dict::Dict)
+    combinedef(dict)
 
-`combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
+`combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict or NamedTuple
 and returns a function definition. """
-function combinedef(dict::Dict)
+function combinedef(dict)
   rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
   wparams = get(dict, :whereparams, [])
