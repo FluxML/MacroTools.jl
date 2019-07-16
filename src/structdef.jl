@@ -4,11 +4,10 @@ isstructdef(ex) = Meta.isexpr(ex, STRUCTSYMBOL)
 function splitstructdef(ex)
     ex = MacroTools.striplines(ex)
     ex = MacroTools.flatten(ex)
-    d = Dict{Symbol, Any}()
     if @capture(ex, struct header_ body__ end)
-        d[:mutable] = false
+        _mutable = false
     elseif @capture(ex, mutable struct header_ body__ end)
-        d[:mutable] = true
+        _mutable = true
     else
         parse_error(ex)
     end
@@ -20,7 +19,7 @@ function splitstructdef(ex)
     else
         parse_error(ex)
     end
-    d[:supertype] = super
+    _supertype = super
     if @capture nameparam name_{param__}
         nothing
     elseif @capture nameparam name_
@@ -28,20 +27,20 @@ function splitstructdef(ex)
     else
         parse_error(ex)
     end
-    d[:name] = name
-    d[:params] = param
-    d[:fields] = []
-    d[:constructors] = []
+    _name = name
+    _params = param
+    _fields = []
+    _constructors = []
     for item in body
         if @capture item field_::T_
-            push!(d[:fields], (field, T))
+            push!(_fields, (field, T))
         elseif item isa Symbol
-            push!(d[:fields], (item, Any))
+            push!(_fields, (item, Any))
         else
-            push!(d[:constructors], item)
+            push!(_constructors, item)
         end
     end
-    d
+    return (; mutable=_mutable, name=_name, params=_params, supertype=_supertype, fields=_fields, body=_body,)
 end
 
 function combinestructdef(d)::Expr
