@@ -44,32 +44,18 @@ and returns `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt 
 calling `MacroTools.combinedef(dict)`, or explicitly with
 
 ```julia
-rtype = get(dict, :rtype, nothing)
+rtype = get(dict, :rtype, :Any)
 wparams = get(dict, :whereparams, [])
 if isempty(wparams)
-  if rtype==nothing
-    :(function $(dict[:name])($(dict[:args]...);
-                              $(dict[:kwargs]...))
-      $(body.args...)
-    end)
-  else
-    :(function $(dict[:name])($(dict[:args]...);
-                              $(dict[:kwargs]...))::$rtype
-      $(body.args...)
-    end)
-  end
+  :(function $(dict[:name])($(dict[:args]...);
+                            $(dict[:kwargs]...))::$rtype
+    $(body.args...)
+  end)
 else
-  if rtype==nothing
-    :(function $(dict[:name])($(dict[:args]...);
-                               $(dict[:kwargs]...)) where {$(wparams...)}
-      $(body.args...)
-    end)
-  else
-    :(function $(dict[:name])($(dict[:args]...);
-                              $(dict[:kwargs]...))::$rtype where {$(wparams...)}
-      $(body.args...)
-    end)
-  end
+  :(function $(dict[:name])($(dict[:args]...);
+                            $(dict[:kwargs]...))::$rtype where {$(wparams...)}
+    $(body.args...)
+  end)
 end
 ```
 
