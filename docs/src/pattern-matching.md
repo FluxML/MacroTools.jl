@@ -97,7 +97,7 @@ which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
 for example:
 
 ```julia
-@capture(ex, f_(args__) = body_ | function f_(args__) body_ end)
+@capture(ex, (f_(args__) = body_) | (function f_(args__) body_ end))
 ```
 
 will match both kinds of function syntax (though it's easier to use
