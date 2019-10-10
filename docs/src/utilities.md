@@ -35,7 +35,7 @@ the full range of function syntax.
 `splitdef(def)` matches a function definition of the form
 
 ```julia
-function name{params}(args; kwargs)::rtype where {whereparams}
+function name(args; kwargs)::rtype where {whereparams}
    body
 end
 ```
@@ -44,12 +44,33 @@ and returns `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt 
 calling `MacroTools.combinedef(dict)`, or explicitly with
 
 ```julia
-rtype = get(dict, :rtype, :Any)
-all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                            $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-  end)
+rtype = get(dict, :rtype, nothing)
+wparams = get(dict, :whereparams, [])
+if isempty(wparams)
+  if rtype==nothing
+    :(function $(dict[:name])($(dict[:args]...);
+                              $(dict[:kwargs]...))
+      $(body.args...)
+    end)
+  else
+    :(function $(dict[:name])($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype
+      $(body.args...)
+    end)
+  end
+else
+  if rtype==nothing
+    :(function $(dict[:name])($(dict[:args]...);
+                               $(dict[:kwargs]...)) where {$(wparams...)}
+      $(body.args...)
+    end)
+  else
+    :(function $(dict[:name])($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype where {$(wparams...)}
+      $(body.args...)
+    end)
+  end
+end
 ```
 
 `splitarg(arg)` matches function arguments (whether from a definition or a function call)

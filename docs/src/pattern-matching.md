@@ -48,7 +48,7 @@ Because `@capture` doubles as a test as well as extracting values, you can
 easily handle unexpected input (try writing this by hand):
 
 ```julia
-@capture(ex, f_{T_}(xs__) = body_) ||
+@capture(ex, f_(xs__) where {T_} = body_) ||
   error("expected a function with a single type parameter")
 ```
 
@@ -105,10 +105,10 @@ will match both kinds of function syntax (though it's easier to use
 expressions, e.g.
 
 ```julia
-@capture(ex, (f_{T_}|f_)(args__) = body_)
+@capture(ex, (f_(args__) where {T_}) | (f_(args__)) = body_)
 ```
 
-matches a function definition, with a single type parameter bound to `T` if possible.
+matches a function definition like `func(a::T) where {T<:Number} = supertype(T)`, with a single type parameter bound to `T` if possible.
 If not, `T = nothing`.
 
 ## Expression Walking
