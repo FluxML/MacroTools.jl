@@ -284,7 +284,7 @@ all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
 ```
 """
 function splitdef(fdef)
-  error_msg = "Not a function definition: $fdef"
+  error_msg = "Not a function definition: $(repr(fdef))"
   @assert(@capture(longdef1(fdef),
                    function (fcall_ | fcall_) body_ end),
           "Not a function definition: $fdef")
@@ -302,7 +302,6 @@ function splitdef(fdef)
   if params !== nothing; di[:params] = params end
   di
 end
-
 
 """
     combinedef(dict::Dict)
