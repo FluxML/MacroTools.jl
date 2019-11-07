@@ -16,15 +16,6 @@ include("examples/destruct.jl")
 include("examples/threading.jl")
 include("examples/forward.jl")
 
-include("cstparser/CSTParser.jl")
-
-module hack; using CSTParser; end
-
-using .CSTParser
-
-include("patch/diff.jl")
-include("patch/cst.jl")
-
 const animals = Symbol[]
 const animals_file = joinpath(@__DIR__, "..", "animals.txt")
 
