@@ -5,7 +5,6 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Pattern Matching" => "pattern-matching.md",
-        "SourceWalk" => "sourcewalk.md",
         "Utilities" => "utilities.md"],
     format = Documenter.HTML(prettyurls = haskey(ENV, "CI")))
 

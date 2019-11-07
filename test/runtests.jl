@@ -6,6 +6,5 @@ using Compat, Compat.Test
 include("match.jl")
 include("split.jl")
 include("destruct.jl")
-include("patch.jl")
 
 end
