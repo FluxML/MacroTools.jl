@@ -35,7 +35,7 @@ the full range of function syntax.
 `splitdef(def)` matches a function definition of the form
 
 ```julia
-function name{params}(args; kwargs)::rtype where {whereparams}
+function name(args; kwargs)::rtype where {whereparams}
    body
 end
 ```
@@ -45,11 +45,10 @@ calling `MacroTools.combinedef(dict)`, or explicitly with
 
 ```julia
 rtype = get(dict, :rtype, :Any)
-all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                            $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-  end)
+:(function $(dict[:name])($(dict[:args]...);
+                          $(dict[:kwargs]...))::$rtype where {$(dict[:whereparams]...)}
+  $(dict[:body].args...)
+end)
 ```
 
 `splitarg(arg)` matches function arguments (whether from a definition or a function call)
