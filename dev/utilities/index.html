@@ -11,14 +11,13 @@ julia&gt; MacroTools.shortdef(ex)
 :(f(x) = begin
           #= none:1 =#
           2x
-      end)</code></pre><p>More generally it&#39;s also possible to use <code>splitdef</code> and <code>combinedef</code> to handle the full range of function syntax.</p><p><code>splitdef(def)</code> matches a function definition of the form</p><pre><code class="language-julia">function name{params}(args; kwargs)::rtype where {whereparams}
+      end)</code></pre><p>More generally it&#39;s also possible to use <code>splitdef</code> and <code>combinedef</code> to handle the full range of function syntax.</p><p><code>splitdef(def)</code> matches a function definition of the form</p><pre><code class="language-julia">function name(args; kwargs)::rtype where {whereparams}
    body
 end</code></pre><p>and returns <code>Dict(:name=&gt;..., :args=&gt;..., etc.)</code>. The definition can be rebuilt by calling <code>MacroTools.combinedef(dict)</code>, or explicitly with</p><pre><code class="language-julia">rtype = get(dict, :rtype, :Any)
-all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
-:(function $(dict[:name]){$(all_params...)}($(dict[:args]...);
-                                            $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-  end)</code></pre><p><code>splitarg(arg)</code> matches function arguments (whether from a definition or a function call) such as <code>x::Int=2</code> and returns <code>(arg_name, arg_type, slurp, default)</code>. <code>default</code> is <code>nothing</code> when there is none. For example:</p><pre><code class="language-julia">&gt; map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
+:(function $(dict[:name])($(dict[:args]...);
+                          $(dict[:kwargs]...))::$rtype where {$(dict[:whereparams]...)}
+  $(dict[:body].args...)
+end)</code></pre><p><code>splitarg(arg)</code> matches function arguments (whether from a definition or a function call) such as <code>x::Int=2</code> and returns <code>(arg_name, arg_type, slurp, default)</code>. <code>default</code> is <code>nothing</code> when there is none. For example:</p><pre><code class="language-julia">&gt; map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
  (:y, :Any, false, nothing)  
  (:a, :Any, false, 2)        
