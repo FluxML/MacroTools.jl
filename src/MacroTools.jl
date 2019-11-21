@@ -1,7 +1,6 @@
 module MacroTools
 
-using DataStructures, Compat
-using Compat.Markdown
+using DataStructures, Markdown, Random
 export @match, @capture
 
 include("match/match.jl")
@@ -25,7 +24,7 @@ resize!(animals, length(_animals))
 animals .= Symbol.(lowercase.(_animals))
 
 function __init__()
-    Compat.Random.shuffle!(animals)
+    Random.shuffle!(animals)
 end
 
 end # module
