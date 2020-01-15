@@ -1,6 +1,8 @@
 module MacroTools
 
 using Markdown, Random
+using ExprTools: splitdef, combinedef
+
 export @match, @capture
 
 include("match/match.jl")

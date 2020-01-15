@@ -1,7 +1,6 @@
 using MacroTools: splitstructdef, combinestructdef
 
-macro nothing_macro()
-end
+macro nothing_macro() end
 @test @expand(@nothing_macro) === nothing
 
 macro splitcombine(fundef) # should be a no-op
