@@ -173,7 +173,7 @@ function gensym_ids(ex)
   syms = Dict{Symbol, Symbol}()
   prewalk(ex) do x
     isgensym(x) ?
-      Base.@get!(syms, x, Symbol(gensymname(x), "_", counter+=1)) :
+      get!(()->Symbol(gensymname(x), "_", counter+=1), syms, x) :
       x
   end
 end
@@ -194,7 +194,7 @@ function alias_gensyms(ex)
   left = copy(animals)
   syms = Dict{Symbol, Symbol}()
   prewalk(ex) do x
-    isgensym(x) ? Base.@get!(syms, x, pop!(left)) : x
+    isgensym(x) ? get!(()->pop!(left), syms, x) : x
   end
 end
 
