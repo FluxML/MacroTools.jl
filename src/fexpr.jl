@@ -87,3 +87,13 @@ function wrap_fun(fexpr::Expr)
     end
 end
 
+################################################################
+function unwrap_head(head)
+    wherestack = Any[]
+    while head isa Expr && head.head == :where
+        push!(wherestack, head.args[2])
+        head = head.args[1]
+    end
+    fcall = head
+    fcall, wherestack
+end
