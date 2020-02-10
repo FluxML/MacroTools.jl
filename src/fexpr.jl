@@ -97,3 +97,13 @@ function unwrap_head(head)
     fcall = head
     fcall, wherestack
 end
+
+function wrap_head(fcall, wherestack)
+    for w in Iterators.reverse(wherestack)
+        fcall = Expr(:where, fcall, w)
+        # fcall = Expr(:where, fcall, esc(w))
+    end
+    head = fcall
+    return head
+end
+################################################################
