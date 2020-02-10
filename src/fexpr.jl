@@ -53,3 +53,37 @@ function unwrap_fun(expr::Expr, should_unwrap_head::Bool, should_unwrap_fcall::B
     return f, args, wherestack, body
 end
 ################################################################
+"""
+    fexpr = wrap_fun(f, args, wherestack, body)
+    fexpr = wrap_fun(fcall, wherestack, body)
+    fexpr = wrap_fun(head, body)
+    fexpr = wrap_fun(fexpr)
+
+Returns a function definition expression
+"""
+function wrap_fun(f, args, wherestack, body)
+    fcall = wrap_fcall(f, args)
+    head =  wrap_head(fcall, wherestack)
+    return Expr(:function, head, Expr(:block, body))
+end
+
+function wrap_fun(fcall, wherestack, body)
+    head =  wrap_head(fcall, wherestack)
+    return Expr(:function, head, Expr(:block, body))
+end
+
+function wrap_fun(head::Expr, body::Expr)
+    return Expr(:function, head, Expr(:block, body))
+end
+
+function wrap_fun(fexpr::Expr)
+    if fexpr.head in (:function, :(=))
+        return fexpr
+    elseif fexpr.head == :block
+        fexpr = fexpr.args[2] # separate fexpr from block
+        return fexpr
+    else
+        error("Expression is not supported")
+    end
+end
+
