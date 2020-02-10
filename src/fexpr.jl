@@ -107,3 +107,12 @@ function wrap_head(fcall, wherestack)
     return head
 end
 ################################################################
+function unwrap_fcall(fcall::Expr)
+    if !(fcall.head == :call)
+        error("Expression is not supported")
+    end
+    f = fcall.args[1]
+    args = fcall.args[2:end]
+    return f, args
+end
+
