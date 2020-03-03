@@ -26,6 +26,8 @@ end
 Like the `quote` keyword but doesn't insert line numbers from the construction
 site. e.g. compare `@q begin end` with `quote end`. Line numbers of interpolated
 expressions are preserverd.
+
+See also: [`rmlines`](@ref)
 """
 macro q(ex)
   Expr(:quote, striplines(ex))
@@ -65,6 +67,8 @@ To work with nested blocks:
 ```julia
 prewalk(rmlines, ex)
 ```
+
+See also: [`@q`](@ref)
 """
 rmlines(x) = x
 function rmlines(x::Expr)
@@ -108,8 +112,9 @@ walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
     postwalk(f, expr)
 
 Applies `f` to each node in the given expression tree, returning the result.
-`f` sees expressions *after* they have been transformed by the walk. See also
-`prewalk`.
+`f` sees expressions *after* they have been transformed by the walk.
+
+See also: [`prewalk`](@ref).
 """
 postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
 
@@ -121,7 +126,7 @@ Applies `f` to each node in the given expression tree, returning the result.
 walk will be applied to whatever `f` returns.
 
 This makes `prewalk` somewhat prone to infinite loops; you probably want to try
-`postwalk` first.
+[`postwalk`](@ref) first.
 """
 prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
 
@@ -282,6 +287,8 @@ all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
       \$(dict[:body])
   end)
 ```
+
+See also: [`combinedef`](@ref)
 """
 function splitdef(fdef)
   error_msg = "Not a function definition: $(repr(fdef))"
@@ -306,8 +313,9 @@ end
 """
     combinedef(dict::Dict)
 
-`combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
-and returns a function definition. """
+`combinedef` is the inverse of [`splitdef`](@ref). It takes a `splitdef`-like Dict
+and returns a function definition.
+"""
 function combinedef(dict::Dict)
   rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
@@ -347,7 +355,8 @@ end
 """
     combinearg(arg_name, arg_type, is_splat, default)
 
-`combinearg` is the inverse of `splitarg`. """
+`combinearg` is the inverse of [`splitarg`](@ref).
+"""
 function combinearg(arg_name, arg_type, is_splat, default)
     a = arg_name===nothing ? :(::$arg_type) : :($arg_name::$arg_type)
     a2 = is_splat ? Expr(:..., a) : a
@@ -376,6 +385,8 @@ Match function arguments (whether from a definition or a function call) such as
  (:y, :Any, false, nothing)
  (:args, :Any, true, nothing)
 ```
+
+See also: [`combinearg`](@ref)
 """
 function splitarg(arg_expr)
     splitvar(arg) =

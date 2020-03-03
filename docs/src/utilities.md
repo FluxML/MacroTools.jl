@@ -67,6 +67,7 @@ such as `x::Int=2` and returns `(arg_name, arg_type, slurp, default)`. `default`
 ## Other Utilities
 
 ```@docs
+MacroTools.@q
 MacroTools.isexpr
 MacroTools.rmlines
 MacroTools.unblock
