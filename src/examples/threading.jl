@@ -1,16 +1,20 @@
 """
 The threading macro is like a more flexible version of the `|>` operator.
 
-    @> x f = f(x)
-    @> x g f == f(g(x))
-    @> x a b c d e == e(d(c(b(a(x)))))
+```julia
+@> x f = f(x)
+@> x g f == f(g(x))
+@> x a b c d e == e(d(c(b(a(x)))))
+```
 
 Unlike `|>`, functions can have arguments - the value
 preceding a function will be treated as its first argument
 
-    @> x g(y, z) f == f(g(x, y, z))
+```julia
+@> x g(y, z) f == f(g(x, y, z))
 
-    @> x g f(y, z) == f(g(x), y, z)
+@> x g f(y, z) == f(g(x), y, z)
+```
 
 See also [`@>>`](@ref), [`@as`](@ref).
 """
@@ -30,9 +34,11 @@ end
 """
 Same as [`@>`](@ref), but threads the last argument.
 
-  @>> x g(y, z) f == f(g(y, z, x))
+```julia
+@>> x g(y, z) f == f(g(y, z, x))
 
-  @>> x g f(y, z) == f(y, z, g(x))
+@>> x g f(y, z) == f(y, z, g(x))
+```
 """
 macro >>(exs...)
   thread(x) = isexpr(x, :block) ? thread(rmlines(x).args...) : x

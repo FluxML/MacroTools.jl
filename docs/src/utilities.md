@@ -56,7 +56,7 @@ such as `x::Int=2` and returns `(arg_name, arg_type, slurp, default)`. `default`
 `nothing` when there is none. For example:
 
 ```julia
-> map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
+julia> map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
  (:y, :Any, false, nothing)  
  (:a, :Any, false, 2)        

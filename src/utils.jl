@@ -11,10 +11,11 @@ assoc!(d, k, v) = (d[k] = v; d)
 """
     @esc x y
 
-is the same as
-
-    x = esc(x)
-    y = esc(y)
+is the same as:
+```julia
+x = esc(x)
+y = esc(y)
+```
 """
 macro esc(xs...)
   :($([:($x = esc($x)) for x in map(esc, xs)]...);)
@@ -138,7 +139,9 @@ replace(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
 Simple expression match; will return `true` if the expression `x` can be found
 inside `expr`.
 
-    inexpr(:(2+2), 2) == true
+```julia
+inexpr(:(2+2), 2) == true
+```
 """
 function inexpr(ex, x)
   result = false
@@ -167,11 +170,13 @@ end
 
 Replaces gensyms with unique ids (deterministically).
 
-    julia> x, y = gensym("x"), gensym("y")
-    (Symbol("##x#363"), Symbol("##y#364"))
+```julia
+julia> x, y = gensym("x"), gensym("y")
+(Symbol("##x#363"), Symbol("##y#364"))
 
-    julia> MacroTools.gensym_ids(:(\$x+\$y))
-    :(x_1 + y_2)
+julia> MacroTools.gensym_ids(:(\$x+\$y))
+:(x_1 + y_2)
+```
 """
 function gensym_ids(ex)
   counter = 0
@@ -189,11 +194,13 @@ end
 Replaces gensyms with animal names.
 This makes gensym'd code far easier to follow.
 
-    julia> x, y = gensym("x"), gensym("y")
-    (Symbol("##x#363"), Symbol("##y#364"))
+```julia
+julia> x, y = gensym("x"), gensym("y")
+(Symbol("##x#363"), Symbol("##y#364"))
 
-    julia> MacroTools.alias_gensyms(:(\$x+\$y))
-    :(porcupine + gull)
+julia> MacroTools.alias_gensyms(:(\$x+\$y))
+:(porcupine + gull)
+```
 """
 function alias_gensyms(ex)
   left = copy(animals)
@@ -206,7 +213,9 @@ end
 """
 More convenient macro expansion, e.g.
 
-    @expand @time foo()
+```julia
+@expand @time foo()
+```
 """
 @static if VERSION <= v"0.7.0-DEV.484"
   macro expand(ex)
@@ -255,7 +264,10 @@ function shortdef1(ex)
 end
 shortdef(ex) = prewalk(shortdef1, ex)
 
-""" `gatherwheres(:(f(x::T, y::U) where T where U)) => (:(f(x::T, y::U)), (:U, :T))`
+"""
+```julia
+gatherwheres(:(f(x::T, y::U) where T where U)) == (:(f(x::T, y::U)), (:U, :T))
+```
 """
 function gatherwheres(ex)
   if @capture(ex, (f_ where {params1__}))
@@ -279,7 +291,7 @@ end
 and return `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
 calling `MacroTools.combinedef(dict)`, or explicitly with
 
-```
+```julia
 rtype = get(dict, :rtype, :Any)
 all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
 :(function \$(dict[:name]){\$(all_params...)}(\$(dict[:args]...);
@@ -378,7 +390,7 @@ Match function arguments (whether from a definition or a function call) such as
 `default` are `nothing` when they are absent. For example:
 
 ```julia
-> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
+julia> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
  (:a, :Any, false, 2)
  (:x, :Int, false, :nothing)
