@@ -1,6 +1,6 @@
 module MacroTools
 
-using DataStructures, Markdown, Random
+using Markdown, Random
 export @match, @capture
 
 include("match/match.jl")
