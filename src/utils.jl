@@ -57,13 +57,21 @@ iscall(ex, f) = isexpr(ex, :call) && ex.args[1] == f
 Remove the line nodes from a block or array of expressions.
 
 Compare `quote end` vs `rmlines(quote end)`
+
+### Examples
+
+To work with nested blocks:
+
+```julia
+prewalk(rmlines, ex)
+```
 """
 rmlines(x) = x
 function rmlines(x::Expr)
   # Do not strip the first argument to a macrocall, which is
   # required.
   if x.head == :macrocall && length(x.args) >= 2
-    Expr(x.head, x.args[1:2]..., filter(x->!isline(x), x.args[3:end])...)
+    Expr(x.head, x.args[1], nothing, filter(x->!isline(x), x.args[3:end])...)
   else
     Expr(x.head, filter(x->!isline(x), x.args)...)
   end
@@ -87,7 +95,7 @@ end
 block(ex) = isexpr(ex, :block) ? ex : :($ex;)
 
 """
-An easy way to get pull the (function/type) name out of
+An easy way to get the (function/type) name out of
 expressions like `foo{T}` or `Bar{T} <: Vector{T}`.
 """
 namify(s::Symbol) = s
@@ -152,14 +160,20 @@ end
 """
     gensym_ids(expr)
 
-Replaces gensyms with unique ids (deterministically)
+Replaces gensyms with unique ids (deterministically).
+
+    julia> x, y = gensym("x"), gensym("y")
+    (Symbol("##x#363"), Symbol("##y#364"))
+
+    julia> MacroTools.gensym_ids(:(\$x+\$y))
+    :(x_1 + y_2)
 """
 function gensym_ids(ex)
   counter = 0
   syms = Dict{Symbol, Symbol}()
   prewalk(ex) do x
     isgensym(x) ?
-      Base.@get!(syms, x, Symbol(gensymname(x), "_", counter+=1)) :
+      get!(()->Symbol(gensymname(x), "_", counter+=1), syms, x) :
       x
   end
 end
@@ -167,14 +181,20 @@ end
 """
     alias_gensyms(expr)
 
-Replaces gensyms with animal names
+Replaces gensyms with animal names.
 This makes gensym'd code far easier to follow.
+
+    julia> x, y = gensym("x"), gensym("y")
+    (Symbol("##x#363"), Symbol("##y#364"))
+
+    julia> MacroTools.alias_gensyms(:(\$x+\$y))
+    :(porcupine + gull)
 """
 function alias_gensyms(ex)
   left = copy(animals)
   syms = Dict{Symbol, Symbol}()
   prewalk(ex) do x
-    isgensym(x) ? Base.@get!(syms, x, pop!(left)) : x
+    isgensym(x) ? get!(()->pop!(left), syms, x) : x
   end
 end
 
@@ -206,10 +226,10 @@ isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
 
 function longdef1(ex)
   if @capture(ex, (arg_ -> body_))
-    @q function ($arg,) $body end
+    @q function ($arg,) $(body.args...) end
   elseif isshortdef(ex)
     @assert @capture(ex, (fcall_ = body_))
-    striplines(Expr(:function, fcall, body))
+    Expr(:function, fcall, body)
   else
     ex
   end
@@ -218,12 +238,13 @@ longdef(ex) = prewalk(longdef1, ex)
 
 function shortdef1(ex)
   @match ex begin
-    function f_(args__) body_ end => @q $f($(args...)) = $body
-    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $body
-    function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $body
-    function (args__,) body_ end => @q ($(args...),) -> $body
+    function f_(args__) body_ end => @q $f($(args...)) = $(body.args...)
+    function f_(args__) where T__ body_ end => @q $f($(args...)) where $(T...) = $(body.args...)
+    function f_(args__)::rtype_ body_ end => @q $f($(args...))::$rtype = $(body.args...)
+    function f_(args__)::rtype_ where T__ body_ end => @q ($f($(args...))::$rtype) where $(T...) = $(body.args...)
+    function (args__,) body_ end => @q ($(args...),) -> $(body.args...)
     ((args__,) -> body_) => ex
-    (arg_ -> body_) => @q ($arg,) -> $body
+    (arg_ -> body_) => @q ($arg,) -> $(body.args...)
     _ => ex
   end
 end
@@ -263,7 +284,7 @@ all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
 ```
 """
 function splitdef(fdef)
-  error_msg = "Not a function definition: $fdef"
+  error_msg = "Not a function definition: $(repr(fdef))"
   @assert(@capture(longdef1(fdef),
                    function (fcall_ | fcall_) body_ end),
           "Not a function definition: $fdef")
@@ -282,30 +303,44 @@ function splitdef(fdef)
   di
 end
 
-
 """
     combinedef(dict::Dict)
 
 `combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
 and returns a function definition. """
 function combinedef(dict::Dict)
-  rtype = get(dict, :rtype, :Any)
+  rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
   wparams = get(dict, :whereparams, [])
+  body = block(dict[:body])
   name = dict[:name]
   name_param = isempty(params) ? name : :($name{$(params...)})
   # We need the `if` to handle parametric inner/outer constructors like
   # SomeType{X}(x::X) where X = SomeType{X}(x, x+2)
   if isempty(wparams)
-    :(function $name_param($(dict[:args]...);
-                           $(dict[:kwargs]...))::$rtype
-      $(dict[:body])
-      end)
+    if rtype==nothing
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))
+        $(body.args...)
+        end)
+    else
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype
+        $(body.args...)
+        end)
+    end
   else
-    :(function $name_param($(dict[:args]...);
-                           $(dict[:kwargs]...))::$rtype where {$(wparams...)}
-      $(dict[:body])
-      end)
+    if rtype==nothing
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...)) where {$(wparams...)}
+        $(body.args...)
+        end)
+    else
+      @q(function $name_param($(dict[:args]...);
+                              $(dict[:kwargs]...))::$rtype where {$(wparams...)}
+        $(body.args...)
+        end)
+    end
   end
 end
 
@@ -370,6 +405,11 @@ function flatten1(ex)
   return length(ex′.args) == 1 ? ex′.args[1] : ex′
 end
 
+"""
+    flatten(ex)
+
+Flatten any redundant blocks into a single block, over the whole expression.
+"""
 flatten(ex) = postwalk(flatten1, ex)
 
 function makeif(clauses, els = nothing)

@@ -1,5 +1,5 @@
 using MacroTools
-using Compat, Compat.Test
+using Test
 
 @testset "MacroTools" begin
 
