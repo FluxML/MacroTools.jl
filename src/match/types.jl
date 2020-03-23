@@ -22,7 +22,7 @@ function tbnew(s::Symbol)
 end
 
 match_inner(b::TypeBind, ex, env) =
-  isexpr(ex, b.ts...) ? (env[tbname(b)] = ex; env) : nomatch(b, ex)
+  isexpr(ex, b.ts...) ? (env[tbname(b)] = ex; env) : @nomatch(b, ex)
 
 subtb(s) = s
 subtb(s::Symbol) = tbnew(s)
