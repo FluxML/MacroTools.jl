@@ -9,4 +9,5 @@ makedocs(
     format = Documenter.HTML(prettyurls = haskey(ENV, "CI")))
 
 deploydocs(
-  repo = "github.com/MikeInnes/MacroTools.jl.git",)
+  repo = "github.com/MikeInnes/MacroTools.jl.git",
+  push_preview = true)
