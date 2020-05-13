@@ -6,5 +6,6 @@ using Test
 include("match.jl")
 include("split.jl")
 include("destruct.jl")
+include("utils.jl")
 
 end

@@ -215,9 +215,7 @@ end
 
 
 "Test for function definition expressions."
-isdef(ex) = ismatch(or_(:(function _(__) _ end),
-                        :(f_(__) = _)),
-                    ex)
+isdef(ex) = isshortdef(ex) || longdef1(ex) !== nothing
 
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
                   (@capture(gatherwheres(fcall)[1],
