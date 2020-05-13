@@ -54,6 +54,20 @@ let
     # Parametric outer constructor
     @splitcombine Foo{A}(a::A) where A = Foo{A, A}(a,a)
     @test Foo{Int}(2) == Foo{Int, Int}(2, 2)
+
+    @test (@splitcombine x -> x + 2)(10) === 12
+    @test (@splitcombine (a, b=2; c=3, d=4) -> a+b+c+d)(1; d=10) === 16
+    @test (@splitcombine ((a, b)::Tuple{Int,Int} -> a + b))((1, 2)) == 3
+    @test (@splitcombine ((a::T) where {T}) -> T)([]) === Vector{Any}
+    @test (@splitcombine ((x::T, y::Vector{U}) where T <: U where U) -> (T, U))(1, Number[2.0]) ==
+          (Int, Number)
+    @test (@splitcombine () -> @zeroarg)() == 1
+    @test (@splitcombine () -> @onearg 1)() == 2
+    @test (@splitcombine function (x) x + 2 end)(10) === 12
+    @test (@splitcombine function (a::T) where {T} T end)([]) === Vector{Any}
+    @test (@splitcombine function (x::T, y::Vector{U}) where T <: U where U
+               (T, U)
+           end)(1, Number[2.0]) == (Int, Number)
 end
 
 @testset "combinestructdef, splitstructdef" begin
