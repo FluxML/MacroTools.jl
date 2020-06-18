@@ -11,10 +11,11 @@ assoc!(d, k, v) = (d[k] = v; d)
 """
     @esc x y
 
-is the same as
-
-    x = esc(x)
-    y = esc(y)
+is the same as:
+```julia
+x = esc(x)
+y = esc(y)
+```
 """
 macro esc(xs...)
   :($([:($x = esc($x)) for x in map(esc, xs)]...);)
@@ -26,6 +27,8 @@ end
 Like the `quote` keyword but doesn't insert line numbers from the construction
 site. e.g. compare `@q begin end` with `quote end`. Line numbers of interpolated
 expressions are preserverd.
+
+See also: [`rmlines`](@ref)
 """
 macro q(ex)
   Expr(:quote, striplines(ex))
@@ -65,6 +68,8 @@ To work with nested blocks:
 ```julia
 prewalk(rmlines, ex)
 ```
+
+See also: [`@q`](@ref)
 """
 rmlines(x) = x
 function rmlines(x::Expr)
@@ -108,8 +113,9 @@ walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
     postwalk(f, expr)
 
 Applies `f` to each node in the given expression tree, returning the result.
-`f` sees expressions *after* they have been transformed by the walk. See also
-`prewalk`.
+`f` sees expressions *after* they have been transformed by the walk.
+
+See also: [`prewalk`](@ref).
 """
 postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
 
@@ -121,7 +127,7 @@ Applies `f` to each node in the given expression tree, returning the result.
 walk will be applied to whatever `f` returns.
 
 This makes `prewalk` somewhat prone to infinite loops; you probably want to try
-`postwalk` first.
+[`postwalk`](@ref) first.
 """
 prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
 
@@ -133,7 +139,9 @@ replace(ex, s, s′) = prewalk(x -> x == s ? s′ : x, ex)
 Simple expression match; will return `true` if the expression `x` can be found
 inside `expr`.
 
-    inexpr(:(2+2), 2) == true
+```julia
+inexpr(:(2+2), 2) == true
+```
 """
 function inexpr(ex, x)
   result = false
@@ -162,11 +170,13 @@ end
 
 Replaces gensyms with unique ids (deterministically).
 
-    julia> x, y = gensym("x"), gensym("y")
-    (Symbol("##x#363"), Symbol("##y#364"))
+```julia
+julia> x, y = gensym("x"), gensym("y")
+(Symbol("##x#363"), Symbol("##y#364"))
 
-    julia> MacroTools.gensym_ids(:(\$x+\$y))
-    :(x_1 + y_2)
+julia> MacroTools.gensym_ids(:(\$x+\$y))
+:(x_1 + y_2)
+```
 """
 function gensym_ids(ex)
   counter = 0
@@ -184,11 +194,13 @@ end
 Replaces gensyms with animal names.
 This makes gensym'd code far easier to follow.
 
-    julia> x, y = gensym("x"), gensym("y")
-    (Symbol("##x#363"), Symbol("##y#364"))
+```julia
+julia> x, y = gensym("x"), gensym("y")
+(Symbol("##x#363"), Symbol("##y#364"))
 
-    julia> MacroTools.alias_gensyms(:(\$x+\$y))
-    :(porcupine + gull)
+julia> MacroTools.alias_gensyms(:(\$x+\$y))
+:(porcupine + gull)
+```
 """
 function alias_gensyms(ex)
   left = copy(animals)
@@ -201,7 +213,9 @@ end
 """
 More convenient macro expansion, e.g.
 
-    @expand @time foo()
+```julia
+@expand @time foo()
+```
 """
 @static if VERSION <= v"0.7.0-DEV.484"
   macro expand(ex)
@@ -248,7 +262,10 @@ function shortdef1(ex)
 end
 shortdef(ex) = prewalk(shortdef1, ex)
 
-""" `gatherwheres(:(f(x::T, y::U) where T where U)) => (:(f(x::T, y::U)), (:U, :T))`
+"""
+```julia
+gatherwheres(:(f(x::T, y::U) where T where U)) == (:(f(x::T, y::U)), (:U, :T))
+```
 """
 function gatherwheres(ex)
   if @capture(ex, (f_ where {params1__}))
@@ -272,7 +289,7 @@ end
 and return `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
 calling `MacroTools.combinedef(dict)`, or explicitly with
 
-```
+```julia
 rtype = get(dict, :rtype, :Any)
 all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
 :(function \$(dict[:name]){\$(all_params...)}(\$(dict[:args]...);
@@ -280,6 +297,8 @@ all_params = [get(dict, :params, [])..., get(dict, :whereparams, [])...]
       \$(dict[:body])
   end)
 ```
+
+See also: [`combinedef`](@ref)
 """
 function splitdef(fdef)
   error_msg = "Not a function definition: $(repr(fdef))"
@@ -321,8 +340,9 @@ end
 """
     combinedef(dict::Dict)
 
-`combinedef` is the inverse of `splitdef`. It takes a splitdef-like Dict
-and returns a function definition. """
+`combinedef` is the inverse of [`splitdef`](@ref). It takes a `splitdef`-like Dict
+and returns a function definition.
+"""
 function combinedef(dict::Dict)
   rtype = get(dict, :rtype, nothing)
   params = get(dict, :params, [])
@@ -383,7 +403,8 @@ end
 """
     combinearg(arg_name, arg_type, is_splat, default)
 
-`combinearg` is the inverse of `splitarg`. """
+`combinearg` is the inverse of [`splitarg`](@ref).
+"""
 function combinearg(arg_name, arg_type, is_splat, default)
     a = arg_name===nothing ? :(::$arg_type) : :($arg_name::$arg_type)
     a2 = is_splat ? Expr(:..., a) : a
@@ -405,13 +426,15 @@ Match function arguments (whether from a definition or a function call) such as
 `default` are `nothing` when they are absent. For example:
 
 ```julia
-> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
+julia> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
  (:a, :Any, false, 2)
  (:x, :Int, false, :nothing)
  (:y, :Any, false, nothing)
  (:args, :Any, true, nothing)
 ```
+
+See also: [`combinearg`](@ref)
 """
 function splitarg(arg_expr)
     splitvar(arg) =
