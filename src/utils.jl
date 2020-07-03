@@ -502,5 +502,5 @@ end
 
 Makes generated code generaly nicer to look at.
 """
-prettify(ex; lines = false) =
-  ex |> (lines ? identity : striplines) |> flatten |> unresolve |> resyntax |> alias_gensyms
+prettify(ex; lines = false, alias = true) =
+  ex |> (lines ? identity : striplines) |> flatten |> unresolve |> resyntax |> (alias ? alias_gensyms : identity)
