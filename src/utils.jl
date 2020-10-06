@@ -31,7 +31,9 @@ expressions are preserverd.
 See also: [`rmlines`](@ref)
 """
 macro q(ex)
-  Expr(:quote, striplines(ex))
+  # use esc here, so we don't rely on https://github.com/JuliaLang/julia/issues/37540 for
+  # interpolation to work
+  esc(Expr(:quote, striplines(ex)))
 end
 
 """
