@@ -88,3 +88,11 @@ let
   @capture(ex, @foo(a_,b_))
   @test (a, b) == (:a, :b)
 end
+
+# https://github.com/FluxML/MacroTools.jl/pull/149
+let
+  ex = :(sin(a, b))
+  f = :sin
+  @capture(ex, $f(args__))
+  @test args == [:a, :b]
+end
