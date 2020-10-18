@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif, prettify, splitdef, splitarg
+  longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg
 
 """
     assoc!(d, k, v)
