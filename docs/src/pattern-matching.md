@@ -16,7 +16,7 @@ end
 If you know what you're doing, you can pull out the name and fields via:
 
 ```julia
-julia> if isexpr(ex.args[2], :struct)
+julia> if Meta.isexpr(ex.args[2], :struct)
          (ex.args[2].args[2], ex.args[2].args[3].args)
        end
 (:Foo,{:( # line 3:),:(x::Int),:( # line 4:),:y})
