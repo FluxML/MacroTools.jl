@@ -37,7 +37,7 @@ julia> @capture(ex, struct T_ fields__ end)
 true
 
 julia> T, fields
-(:Foo, [:(x::Int), :y])
+(:Foo, Any[:(x::Int), :y])
 ```
 
 Symbols like `T_` underscore are treated as catchalls which match any
