@@ -19,7 +19,7 @@ If you know what you're doing, you can pull out the name and fields via:
 julia> if Meta.isexpr(ex.args[2], :struct)
          (ex.args[2].args[2], ex.args[2].args[3].args)
        end
-(:Foo,{:( # line 3:),:(x::Int),:( # line 4:),:y})
+(:Foo, Any[:(#= line 3 =#), :(x::Int), :(#= line 4 =#), :y])
 ```
 
 But this is hard to write – since you have to deconstruct the `type`
