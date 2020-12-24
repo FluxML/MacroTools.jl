@@ -32,36 +32,11 @@ julia> MacroTools.shortdef(ex)
 More generally it's also possible to use `splitdef` and `combinedef` to handle
 the full range of function syntax.
 
-`splitdef(def)` matches a function definition of the form
-
-```julia
-function name(args; kwargs)::rtype where {whereparams}
-   body
-end
-```
-
-and returns `Dict(:name=>..., :args=>..., etc.)`. The definition can be rebuilt by
-calling `MacroTools.combinedef(dict)`, or explicitly with
-
-```julia
-rtype = get(dict, :rtype, :Any)
-:(function $(dict[:name])($(dict[:args]...);
-                          $(dict[:kwargs]...))::$rtype where {$(dict[:whereparams]...)}
-  $(dict[:body].args...)
-end)
-```
-
-`splitarg(arg)` matches function arguments (whether from a definition or a function call)
-such as `x::Int=2` and returns `(arg_name, arg_type, slurp, default)`. `default` is
-`nothing` when there is none. For example:
-
-```julia
-julia> map(splitarg, (:(f(y, a=2, x::Int=nothing, args...))).args[2:end])
-4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
- (:y, :Any, false, nothing)  
- (:a, :Any, false, 2)        
- (:x, :Int, false, :nothing)
- (:args, :Any, true, nothing)
+```@docs
+MacroTools.splitdef
+MacroTools.combinedef
+MacroTools.splitarg
+MacroTools.combinearg
 ```
 
 ## Other Utilities
