@@ -1,6 +1,6 @@
 # Pattern Matching
 
-With pattern matching enables macro writers to deconstruct Julia expressions in a
+Pattern matching enables macro writers to deconstruct Julia expressions in a
 more declarative way, and without having to know in great detail how syntax is
 represented internally. For example, say you have a type definition:
 
