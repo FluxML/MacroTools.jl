@@ -10,7 +10,7 @@ function splitstructdef(ex)
     elseif @capture(ex, mutable struct header_ body__ end)
         d[:mutable] = true
     else
-        parse_error(ex)
+        throw(ArgumentError("can't split $(repr(ex))"))
     end
     
     if @capture header nameparam_ <: super_
@@ -18,7 +18,7 @@ function splitstructdef(ex)
     elseif @capture header nameparam_
         super = :Any
     else
-        parse_error(ex)
+        throw(ArgumentError("can't split $(repr(ex))"))
     end
     d[:supertype] = super
     if @capture nameparam name_{param__}
@@ -26,7 +26,7 @@ function splitstructdef(ex)
     elseif @capture nameparam name_
         param = []
     else
-        parse_error(ex)
+        throw(ArgumentError("can't split $(repr(ex))"))
     end
     d[:name] = name
     d[:params] = param

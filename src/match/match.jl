@@ -24,7 +24,11 @@ isbinding(s) = false
 isbinding(s::Symbol) = occursin(r"[^_]_(_str)?$", string(s))
 
 function bname(s::Symbol)
-  Symbol(Base.match(r"^@?(.*?)_+(_str)?$", string(s)).captures[1])
+  return @static if isdefined(Base, :AbstractMatch)
+    Symbol((Base.match(r"^@?(.*?)_+(_str)?$", string(s))::AbstractMatch).captures[1])
+  else
+    Symbol((Base.match(r"^@?(.*?)_+(_str)?$", string(s))::Base.RegexMatch).captures[1])
+  end
 end
 
 function match_inner(pat, ex, env)
