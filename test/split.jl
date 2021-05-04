@@ -112,4 +112,5 @@ end
     @test first(constructors) ==
         :((S(a::A) where A) = new{A}()) |> MacroTools.flatten
 
+    @test_throws ArgumentError splitstructdef(:(call_ex(arg)))
 end
