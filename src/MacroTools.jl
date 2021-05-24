@@ -1,7 +1,7 @@
 module MacroTools
 
 using Markdown, Random
-export @match, @capture
+export @match, @capture, @match_notb, @capture_notb
 
 include("match/match.jl")
 include("match/types.jl")
