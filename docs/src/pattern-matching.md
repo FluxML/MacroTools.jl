@@ -68,7 +68,7 @@ Highlander there can only be one (per expression).
 
 ### Matching on expression type
 
-`@capture` can match expressions by their type, which is either the `head` of `Expr`
+`@capture` can match expressions by their type, which is either the `:head` of `Expr`
 objects or the `typeof` atomic stuff like `Symbol`s and `Int`s. For example:
 
 ```julia
@@ -90,6 +90,26 @@ Another common use case is to catch symbol literals, e.g.
 ```
 
 which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
+
+!!! tip "Matching without expression type"
+    [Matching on expression type](@ref) can be useful, but the problem is that `@capture` can't distinguish between
+    its syntax to specify a `:head` of `Expr` and a variable name with underscores:
+
+    For example, in the example below, `@capture` recognizes `global_string` as the syntax to specify `Expr`'s head (i.e. `:string`),
+    not as a simple variable name:
+    ```julia
+    julia> ex = :(global_string = 10);
+    julia> @capture(ex, global_string = n_) # tries to match `Expr(:string, ...) = n_` and bound the matched lhs into a variable `global` and the matched rhs into a variable `n`.
+    false
+    ```
+
+    To circumvent this issue, MacroTools exports `@capture_notb`, which skips all the expression type matching syntaxes:
+    ```julia
+    julia> ex = :(global_string = 10)
+    julia> @capture_notb(ex, global_string = n_) # tries to match `global_string = n_` pattern and bound the matched rhs into a variable `n`.
+    true
+    ```
+
 
 ### Unions
 

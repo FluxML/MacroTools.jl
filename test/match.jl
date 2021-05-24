@@ -96,3 +96,21 @@ let
   @capture(ex, $f(args__))
   @test args == [:a, :b]
 end
+
+# hint to use `@capture_notb`
+let
+  ex = :(const GLOBAL_STRING = 10)
+  @static if v"1.7.0-DEV" ≤ VERSION
+    @test_throws ArgumentError macroexpand(@__MODULE__, :(@capture($ex, const GLOBAL_STRING = x_)))
+  else
+    # before v1.7, `macroexpand` throws `LoadError` instead of actual error
+    @test_throws LoadError macroexpand(@__MODULE__, :(@capture($ex, const GLOBAL_STRING = x_)))
+  end
+end
+
+# if we don't want to make `global_string` type bind syntax, we need to use `@capture_notb`
+let
+  ex = :(const global_string = 10)
+  @capture_notb(ex, const global_string = x_)
+  @test x === 10
+end
