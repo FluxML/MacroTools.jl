@@ -36,7 +36,29 @@ match_inner(pat::QuoteNode, ex::QuoteNode, env) =
   match(pat.value, ex.value, env)
 
 isslurp(s) = false
-isslurp(s::Symbol) = s == :__ || occursin(r"[^_]__$", string(s))
+function isslurp(s::Symbol)
+  s === :__ && return true
+  s in IGNORED_SLURP_PATTERNS && return false
+  return occursin(r"[^_]__$", string(s))
+end
+
+"""
+    const IGNORED_SLURP_PATTERNS = Set{Symbol}()
+
+Symbols in `IGNORED_SLURP_PATTERNS` won't be recognized as "slurp pattern".
+You may want to configure this object when you want to use a variable whole name includes double-underscores.
+Example:
+```julia
+julia> @capture(:(__init__()), __init__()), @capture(:(foo()), __init__()) # you may want the latter case not to match
+(true, true)
+
+julia> push!(MacroTools.IGNORED_SLURP_PATTERNS, :__init__); # configure `IGNORED_SLURP_PATTERNS`
+
+julia> @capture(:(__init__()), __init__()), @capture(:(foo()), __init__()) # now `__init__` isn't recognized as slurp pattern
+(true, false)
+```
+"""
+const IGNORED_SLURP_PATTERNS = Set{Symbol}()
 
 function slurprange(pat)
   slurps = length(filter(isslurp, pat))

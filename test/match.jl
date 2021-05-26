@@ -96,3 +96,18 @@ let
   @capture(ex, $f(args__))
   @test args == [:a, :b]
 end
+
+# configurable "slurp" pattern
+let
+  try
+    pat = :(__init__())
+
+    @test isempty(MacroTools.IGNORED_SLURP_PATTERNS) # `IGNORED_SLURP_PATTERNS` should be empty by default
+    @test (@capture(:(foo()), $pat), @capture(:(__init__()), $pat)) == (true, true)
+
+    push!(MacroTools.IGNORED_SLURP_PATTERNS, :__init__)
+    @test (@capture(:(foo()), $pat), @capture(:(__init__()), $pat)) == (false, true)
+  finally
+    empty!(MacroTools.IGNORED_SLURP_PATTERNS) # clean up
+  end
+end
