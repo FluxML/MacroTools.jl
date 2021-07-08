@@ -12,7 +12,6 @@ function splitstructdef(ex)
     else
         parse_error(ex)
     end
-    
     if @capture header nameparam_ <: super_
         nothing
     elseif @capture header nameparam_
@@ -33,10 +32,14 @@ function splitstructdef(ex)
     d[:fields] = []
     d[:constructors] = []
     for item in body
-        if @capture item field_::T_
-            push!(d[:fields], (field, T))
+        if @capture item field_::T_= def_
+            push!(d[:fields], (field, T, def))
+        elseif @capture item field_= def_
+            push!(d[:fields], (field, Any, def))
+        elseif @capture item field_::T_
+            push!(d[:fields], (field, T, nothing))
         elseif item isa Symbol
-            push!(d[:fields], (item, Any))
+            push!(d[:fields], (item, Any, nothing))
         else
             push!(d[:constructors], item)
         end
@@ -49,10 +52,7 @@ function combinestructdef(d)::Expr
     parameters = d[:params]
     nameparam = isempty(parameters) ? name : :($name{$(parameters...)})
     header = :($nameparam <: $(d[:supertype]))
-    fields = map(d[:fields]) do field
-        fieldname, typ = field
-        :($fieldname::$typ)
-    end
+    fields = map(combinefield, d[:fields])
     body = quote
         $(fields...)
         $(d[:constructors]...)
@@ -62,6 +62,6 @@ function combinestructdef(d)::Expr
 end
 
 function combinefield(x)
-    fieldname, T = x
-    :($fieldname::$T)
+    fieldname, T, def = x
+    def === nothing ? :($fieldname::$T) : :($fieldname::$T= $def)
 end
