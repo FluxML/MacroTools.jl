@@ -417,13 +417,6 @@ function combinearg(arg_name, arg_type, is_splat, default)
     return default === nothing ? a2 : Expr(:kw, a2, default)
 end
 
-
-macro splitcombine(fundef)
-    dict = splitdef(fundef)
-    esc(rebuilddef(striplines(dict)))
-end
-
-
 """
     splitarg(arg)
 
@@ -444,11 +437,11 @@ See also: [`combinearg`](@ref)
 """
 function splitarg(arg_expr)
     splitvar(arg) =
-        @match arg begin
+        (@match arg begin
             ::T_ => (nothing, T)
             name_::T_ => (name, T)
             x_ => (x, :Any)
-        end
+        end)::NTuple{2,Any} # the pattern `x_` matches any expression
     (is_splat = @capture(arg_expr, arg_expr2_...)) || (arg_expr2 = arg_expr)
     if @capture(arg_expr2, arg_ = default_)
         @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
