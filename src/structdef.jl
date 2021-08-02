@@ -12,7 +12,7 @@ function splitstructdef(ex)
     else
         parse_error(ex)
     end
-    
+
     if @capture header nameparam_ <: super_
         nothing
     elseif @capture header nameparam_
@@ -43,6 +43,8 @@ function splitstructdef(ex)
     end
     d
 end
+
+parse_error(ex) = throw(ArgumentError("failed to split $(repr(ex))"))
 
 function combinestructdef(d)::Expr
     name = d[:name]
