@@ -11,7 +11,13 @@ function match_inner(pat::OrBind, ex, env)
   env′ == nothing ? match(pat.pat2, ex, env) : merge!(env, env′)
 end
 
-isor(ex) = isexpr(ex, :call) && ex.args[1] in (:or_, :|)
+function isor(ex)
+  if isexpr(ex, :call)
+    arg1 = ex.args[1]
+    return arg1 isa Symbol && arg1 in (:or_, :|)
+  end
+  return false
+end
 
 function ornew(ex)
   isor(ex) || return ex
