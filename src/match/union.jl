@@ -14,7 +14,7 @@ end
 function isor(ex)
   if isexpr(ex, :call)
     arg1 = ex.args[1]
-    return arg1 isa Symbol && arg1 in (:or_, :|)    # to improve inferrability, see #166
+    return arg1 isa Symbol && arg1 in (:or_, :|)  # "isa Symbol" check improves inferrability (#166)
   end
   return false
 end
