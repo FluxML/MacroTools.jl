@@ -8,7 +8,7 @@ or_(p...) = foldl(or_, p)
 
 function match_inner(pat::OrBind, ex, env)
   env′ = trymatch(pat.pat1, ex)
-  env′ == nothing ? match(pat.pat2, ex, env) : merge!(env, env′)
+  env′ === nothing ? match(pat.pat2, ex, env) : merge!(env, env′)
 end
 
 function isor(ex)

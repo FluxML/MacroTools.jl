@@ -39,7 +39,7 @@ function clauses(ex)
   for l in ex.args
     isline(l) && (line = l; continue)
     env = trymatch(:(pat_ => yes_), l)
-    env == nothing && error("Invalid match clause $l")
+    env === nothing && error("Invalid match clause $l")
     pat, yes = env[:pat], env[:yes]
     push!(clauses, (pat, :($line;$yes)))
   end
@@ -70,7 +70,7 @@ macro capture(ex, pat)
   quote
     $([:($(esc(b)) = nothing) for b in bs]...)
     env = trymatch($(esc(Expr(:quote, pat))), $(esc(ex)))
-    if env == nothing
+    if env === nothing
       false
     else
       $([:($(esc(b)) = get(env, $(esc(Expr(:quote, b))), nothing)) for b in bs]...)
