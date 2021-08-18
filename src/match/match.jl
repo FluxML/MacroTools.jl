@@ -96,7 +96,7 @@ match(::LineNumberNode, ::LineNumberNode, _) = nothing
 
 function match(pat, ex, env)
   pat = normalise(pat)
-  pat == :_ && return env
+  pat === :_ && return env
   isbinding(pat) && return store!(env, bname(pat), ex)
   ex = normalise(ex)
   pat, ex = blockunify(pat, ex)
