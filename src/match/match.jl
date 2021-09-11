@@ -36,7 +36,7 @@ match_inner(pat::QuoteNode, ex::QuoteNode, env) =
   match(pat.value, ex.value, env)
 
 isslurp(s) = false
-isslurp(s::Symbol) = s == :__ || occursin(r"[^_]__$", string(s))
+isslurp(s::Symbol) = s === :__ || occursin(r"[^_]__$", string(s))
 
 function slurprange(pat)
   slurps = length(filter(isslurp, pat))
@@ -68,7 +68,7 @@ function match_inner(pat::Expr, ex::Expr, env)
     end
 
     if isslurp(p)
-      p ≠ :__ && @trymatch store!(env, bname(p), slurp)
+      p !== :__ && @trymatch store!(env, bname(p), slurp)
     else
       @trymatch match(p, ex.args[i], env)
       i += 1
@@ -101,7 +101,7 @@ function match(pat, ex, env)
   ex = normalise(ex)
   pat, ex = blockunify(pat, ex)
   isslurp(pat) && return store!(env, bname(pat), Any[ex])
-  return match_inner(pat, ex, env)
+  return match_inner(pat, ex, env)::Union{typeof(env),MatchError,Nothing}
 end
 
 match(pat, ex) = match(pat, ex, Dict())

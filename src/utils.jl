@@ -77,7 +77,7 @@ rmlines(x) = x
 function rmlines(x::Expr)
   # Do not strip the first argument to a macrocall, which is
   # required.
-  if x.head == :macrocall && length(x.args) >= 2
+  if x.head === :macrocall && length(x.args) >= 2
     Expr(x.head, x.args[1], nothing, filter(x->!isline(x), x.args[3:end])...)
   else
     Expr(x.head, filter(x->!isline(x), x.args)...)
@@ -161,9 +161,9 @@ isgensym(s) = false
 
 function gensymname(x::Symbol)
   m = Base.match(r"##(.+)#\d+", String(x))
-  m == nothing || return m.captures[1]
+  m === nothing || return m.captures[1]
   m = Base.match(r"#\d+#(.+)", String(x))
-  m == nothing || return m.captures[1]
+  m === nothing || return m.captures[1]
   return "x"
 end
 

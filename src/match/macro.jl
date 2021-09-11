@@ -2,7 +2,7 @@ function allbindings(pat, bs)
   if isa(pat, QuoteNode)
     return allbindings(pat.value, bs)
   end
-  return isbinding(pat) || (isslurp(pat) && pat ≠ :__) ? push!(bs, bname(pat)) :
+  return isbinding(pat) || (isslurp(pat) && pat !== :__) ? push!(bs, bname(pat)) :
   isa(pat, TypeBind) ? push!(bs, pat.name) :
   isa(pat, OrBind) ? (allbindings(pat.pat1, bs); allbindings(pat.pat2, bs)) :
   istb(pat) ? push!(bs, tbname(pat)) :
@@ -25,7 +25,7 @@ function makeclause(pat, yes, els = nothing)
   pat = subtb(subor(pat))
   quote
     env = trymatch($(Expr(:quote, pat)), ex)
-    if env != nothing
+    if env !== nothing
       $(bindinglet(bs, esc(yes)))
     else
       $els
