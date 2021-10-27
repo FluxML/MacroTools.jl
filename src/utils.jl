@@ -190,9 +190,6 @@ function gensym_ids(ex)
   end
 end
 
-const l = ReentrantLock()
-const shuffled = Ref{Bool}(false)
-
 """
     alias_gensyms(expr)
 
@@ -208,12 +205,6 @@ julia> MacroTools.alias_gensyms(:(\$x+\$y))
 ```
 """
 function alias_gensyms(ex)
-  lock(l) do
-    if !shuffled[]
-      Random.shuffle!(animals)
-      shuffled[] = true
-    end
-  end
   left = copy(animals)
   syms = Dict{Symbol, Symbol}()
   prewalk(ex) do x

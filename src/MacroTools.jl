@@ -22,6 +22,6 @@ const animals_file = joinpath(@__DIR__, "..", "animals.txt")
 _animals = split(read(animals_file, String))
 resize!(animals, length(_animals))
 animals .= Symbol.(lowercase.(_animals))
-
+Random.shuffle!(animals)
 
 end # module
