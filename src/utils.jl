@@ -231,8 +231,10 @@ end
 
 
 "Test for function definition expressions."
-isdef(ex) = isshortdef(ex) || longdef1(ex) !== nothing
+isdef(ex) = isshortdef(ex) || islongdef(ex)
 
+islongdef(ex)  = @capture(ex, function (fcall_ | fcall_) body_ end)
+      
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
                   (@capture(gatherwheres(fcall)[1],
                             (f_(args__) |
