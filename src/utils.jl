@@ -219,14 +219,8 @@ More convenient macro expansion, e.g.
 @expand @time foo()
 ```
 """
-@static if VERSION <= v"0.7.0-DEV.484"
-  macro expand(ex)
-    :(alias_gensyms(macroexpand($(current_module()), $(ex,)[1])))
-  end
-else
-  macro expand(ex)
-    :(alias_gensyms(macroexpand($(__module__), $(ex,)[1])))
-  end
+macro expand(ex)
+  :(alias_gensyms(macroexpand($(__module__), $(ex,)[1])))
 end
 
 
@@ -471,11 +465,7 @@ Flatten any redundant blocks into a single block, over the whole expression.
 flatten(ex) = postwalk(flatten1, ex)
 
 function makeif(clauses, els = nothing)
-  @static if VERSION < v"0.7.0-"
-    foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), els, clauses)
-  else
-    foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), clauses; init=els)
-  end
+  foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), clauses; init=els)
 end
 
 unresolve1(x) = x

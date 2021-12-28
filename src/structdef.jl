@@ -1,5 +1,4 @@
-const STRUCTSYMBOL = VERSION < v"0.7-" ? :type : :struct
-isstructdef(ex) = Meta.isexpr(ex, STRUCTSYMBOL)
+isstructdef(ex) = Meta.isexpr(ex, :struct)
 
 function splitstructdef(ex)
     ex = MacroTools.striplines(ex)
@@ -60,7 +59,7 @@ function combinestructdef(d)::Expr
         $(d[:constructors]...)
     end
 
-    Expr(STRUCTSYMBOL, d[:mutable], header, body)
+    Expr(:struct, d[:mutable], header, body)
 end
 
 function combinefield(x)

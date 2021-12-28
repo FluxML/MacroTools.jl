@@ -52,13 +52,8 @@ macro match(ex, lines)
     ex = $(esc(ex))
   end
 
-  @static if VERSION < v"0.7.0-"
-    body = foldr((clause, body) -> makeclause(clause..., body),
-                 nothing, clauses(lines))
-  else
-    body = foldr((clause, body) -> makeclause(clause..., body),
-                 clauses(lines); init=nothing)
-  end
+  body = foldr((clause, body) -> makeclause(clause..., body),
+               clauses(lines); init=nothing)
 
   push!(result.args, body)
   return result
