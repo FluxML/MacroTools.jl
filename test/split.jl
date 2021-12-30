@@ -6,6 +6,8 @@ end
 
 macro splitcombine(fundef) # should be a no-op
     dict = splitdef(fundef)
+    dict[:args] = map(arg->combinearg(splitarg(arg)...), dict[:args])
+    dict[:kwargs] = map(arg->combinearg(splitarg(arg)...), dict[:kwargs])
     esc(MacroTools.combinedef(dict))
 end
 
@@ -24,10 +26,17 @@ let
     @test longdef(:(f(x)::Int = 10)).head == :function
     @test longdef(:(f(x::T) where U where T = 2)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
-    @test map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end]) ==
-        [(:a, :Any, false, 2), (:x, :Int, false, :nothing),
-         (:y, :Any, false, nothing), (:args, :Any, true, nothing)]
+    @test map(splitarg, (:(f(a=2, x::Int=nothing, y::Any, args...))).args[2:end]) ==
+        [(:a, nothing, false, 2), (:x, :Int, false, :nothing),
+         (:y, :Any, false, nothing), (:args, nothing, true, nothing)]
     @test splitarg(:(::Int)) == (nothing, :Int, false, nothing)
+    kwargs = splitdef(:(f(; a::Int = 1, b...) = 1))[:kwargs]
+    @test map(splitarg, kwargs) ==
+        [(:a, :Int, false, 1), (:b, nothing, true, nothing)]
+    args = splitdef(:(f(a::Int = 1) = 1))[:args]
+    @test map(splitarg, args) == [(:a, :Int, false, 1)]
+    args = splitdef(:(f(a::Int ... = 1) = 1))[:args]
+    @test map(splitarg, args) == [(:a, :Int, true, 1)]
 
     @splitcombine foo(x) = x+2
     @test foo(10) == 12
@@ -46,6 +55,12 @@ let
     @test fmacro0() == 1
     @splitcombine fmacro1() = @onearg 1
     @test fmacro1() == 2
+
+    @splitcombine bar(; a::Int = 1, b...) = 2
+    @test bar(a=3, x = 1, y = 2) == 2
+    @splitcombine qux(a::Int... = 0) = sum(a)
+    @test qux(1, 2, 3) == 6
+    @test qux() == 0
 
     struct Foo{A, B}
         a::A

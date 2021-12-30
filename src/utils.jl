@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg
+  longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg, combinearg
 
 """
     assoc!(d, k, v)
@@ -406,7 +406,10 @@ end
 `combinearg` is the inverse of [`splitarg`](@ref).
 """
 function combinearg(arg_name, arg_type, is_splat, default)
-    a = arg_name===nothing ? :(::$arg_type) : :($arg_name::$arg_type)
+    @assert arg_name !== nothing || arg_type !== nothing
+    a = arg_name===nothing ? :(::$arg_type) :
+        arg_type===nothing ? arg_name :
+            :($arg_name::$arg_type)
     a2 = is_splat ? Expr(:..., a) : a
     return default === nothing ? a2 : Expr(:kw, a2, default)
 end
@@ -415,34 +418,34 @@ end
     splitarg(arg)
 
 Match function arguments (whether from a definition or a function call) such as
-`x::Int=2` and return `(arg_name, arg_type, is_splat, default)`. `arg_name` and
-`default` are `nothing` when they are absent. For example:
+`x::Int=2` and return `(arg_name, arg_type, is_splat, default)`. `arg_name`,
+`arg_type`, and `default` are `nothing` when they are absent. For example:
 
 ```julia
 julia> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
 4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
- (:a, :Any, false, 2)
+ (:a, nothing, false, 2)
  (:x, :Int, false, :nothing)
  (:y, :Any, false, nothing)
- (:args, :Any, true, nothing)
+ (:args, nothing, true, nothing)
 ```
 
 See also: [`combinearg`](@ref)
 """
 function splitarg(arg_expr)
-    splitvar(arg) =
-        (@match arg begin
-            ::T_ => (nothing, T)
-            name_::T_ => (name, T)
-            x_ => (x, :Any)
-        end)::NTuple{2,Any} # the pattern `x_` matches any expression
-    (is_splat = @capture(arg_expr, arg_expr2_...)) || (arg_expr2 = arg_expr)
-    if @capture(arg_expr2, arg_ = default_)
-        @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
-        return (splitvar(arg)..., is_splat, default)
+    if @capture(arg_expr, arg_expr2_ = default_)
+      @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
     else
-        return (splitvar(arg_expr2)..., is_splat, nothing)
+       arg_expr2 = arg_expr
     end
+    is_splat = @capture(arg_expr2, arg_expr3_...)
+    is_splat || (arg_expr3 = arg_expr2)
+    (arg_name, arg_type) = (@match arg_expr3 begin
+        ::T_ => (nothing, T)
+        name_::T_ => (name, T)
+        x_ => (x, nothing)
+    end)::NTuple{2,Any} # the pattern `x_` matches any expression
+    return (arg_name, arg_type, is_splat, default)
 end
 
 
