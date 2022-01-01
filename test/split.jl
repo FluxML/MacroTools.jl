@@ -27,12 +27,12 @@ let
     @test longdef(:(f(x::T) where U where T = 2)).head == :function
     @test shortdef(:(function f(x)::Int 10 end)).head != :function
     @test map(splitarg, (:(f(a=2, x::Int=nothing, y::Any, args...))).args[2:end]) ==
-        [(:a, nothing, false, 2), (:x, :Int, false, :nothing),
-         (:y, :Any, false, nothing), (:args, nothing, true, nothing)]
+        [(:a, :Any, false, 2), (:x, :Int, false, :nothing),
+         (:y, :Any, false, nothing), (:args, :Any, true, nothing)]
     @test splitarg(:(::Int)) == (nothing, :Int, false, nothing)
     kwargs = splitdef(:(f(; a::Int = 1, b...) = 1))[:kwargs]
     @test map(splitarg, kwargs) ==
-        [(:a, :Int, false, 1), (:b, nothing, true, nothing)]
+        [(:a, :Int, false, 1), (:b, :Any, true, nothing)]
     args = splitdef(:(f(a::Int = 1) = 1))[:args]
     @test map(splitarg, args) == [(:a, :Int, false, 1)]
     args = splitdef(:(f(a::Int ... = 1) = 1))[:args]
