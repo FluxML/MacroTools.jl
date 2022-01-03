@@ -434,6 +434,8 @@ See also: [`combinearg`](@ref)
 """
 function splitarg(arg_expr)
     if @capture(arg_expr, arg_expr2_ = default_)
+      # This assert will only be triggered if a `nothing` literal was somehow spliced into the Expr.
+      # A regular `nothing` default value is a `Symbol` when it gets here. See #178 
       @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
     else
        arg_expr2 = arg_expr
