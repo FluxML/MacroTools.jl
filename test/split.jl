@@ -36,7 +36,7 @@ let
     args = splitdef(:(f(a::Int = 1) = 1))[:args]
     @test map(splitarg, args) == [(:a, :Int, false, 1)]
     args = splitdef(:(f(a::Int ... = 1) = 1))[:args]
-    @test map(splitarg, args) == [(:a, :Int, true, 1)]
+    @test map(splitarg, args) == [(:a, :Int, true, 1)]    # issue 165 
 
     @splitcombine foo(x) = x+2
     @test foo(10) == 12
