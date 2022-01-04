@@ -408,7 +408,7 @@ end
 function combinearg(arg_name, arg_type, is_splat, default)
     @assert arg_name !== nothing || arg_type !== nothing
     a = arg_name===nothing ? :(::$arg_type) :
-        arg_type==:Any ? arg_name :
+        arg_type==:Any && is_splat ? arg_name :   # see #177 and julia#43625
             :($arg_name::$arg_type)
     a2 = is_splat ? Expr(:..., a) : a
     return default === nothing ? a2 : Expr(:kw, a2, default)
