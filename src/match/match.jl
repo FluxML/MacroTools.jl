@@ -16,6 +16,7 @@ macro trymatch(ex)
 end
 
 function store!(env, name, ex)
+  ismissing(ex) && error("Pattern matching doesn't currently support missing values.")
   haskey(env, name) && !(env[name] == ex) && @nomatch(name, ex)
   assoc!(env, name, ex)
 end
