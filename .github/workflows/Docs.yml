@@ -19,6 +19,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@latest
       - uses: julia-actions/julia-buildpkg@latest
+        with:
+          project: docs
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
