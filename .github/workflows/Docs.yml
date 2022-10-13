@@ -5,8 +5,7 @@ on:
     branches: [master]
     tags: '*'
   pull_request:
-    paths:
-      - 'docs/**'
+    paths: ['docs/**']
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -18,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@latest
+      - name: Install dependencies
+        shell: julia --color=yes --project=docs/ {0}
+        run: |
+          using Pkg
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.instantiate()
       - uses: julia-actions/julia-buildpkg@latest
         with:
           project: docs
