@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/julia-buildpkg@latest
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
