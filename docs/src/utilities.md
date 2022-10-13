@@ -4,7 +4,7 @@
 
 Function definitions pose a problem to pattern matching, since there are a lot
 of different ways to define a function. For example, a pattern that captures
-`f(x) = 2x` will not match
+`f(x) = 2x` will not match the following syntax:
 
 ```julia
 function f(x)
