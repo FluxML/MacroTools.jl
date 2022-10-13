@@ -1,0 +1,24 @@
+name: Documentation
+
+on:
+  push:
+    branches: [master]
+    tags: '*'
+  pull_request:
+    paths:
+      - 'docs/**'
+
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and deploy documentation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --color=yes --project=docs/ docs/make.jl
