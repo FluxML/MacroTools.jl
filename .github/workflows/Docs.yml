@@ -17,15 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@latest
-      - name: Install dependencies
+      - name: Develop MacroTools
         shell: julia --color=yes --project=docs/ {0}
         run: |
           using Pkg
           Pkg.develop(PackageSpec(path=pwd()))
           Pkg.instantiate()
-      - uses: julia-actions/julia-buildpkg@latest
-        with:
-          project: docs
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
