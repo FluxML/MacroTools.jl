@@ -3,10 +3,8 @@ name: Invalidations
 on:
   pull_request:
 
-concurrency:
-  # Skip intermediate builds: always.
-  # Cancel intermediate builds: always.
-  group: ${{ github.workflow }}-${{ github.ref }}
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -16,18 +14,18 @@ jobs:
     if: github.base_ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
-    - uses: julia-actions/setup-julia@v1
+    - uses: julia-actions/setup-julia@latest
       with:
         version: '1'
     - uses: actions/checkout@v3
-    - uses: julia-actions/julia-buildpkg@v1
+    - uses: julia-actions/julia-buildpkg@latest
     - uses: julia-actions/julia-invalidations@v1
       id: invs_pr
 
     - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.repository.default_branch }}
-    - uses: julia-actions/julia-buildpkg@v1
+    - uses: julia-actions/julia-buildpkg@latest
     - uses: julia-actions/julia-invalidations@v1
       id: invs_default
     
