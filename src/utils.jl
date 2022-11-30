@@ -1,5 +1,5 @@
 export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
-  longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg, combinearg
+  longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg, combinearg, splitargdef, combineargdef
 
 """
     assoc!(d, k, v)
@@ -403,7 +403,8 @@ end
 """
     combinearg(arg_name, arg_type, is_splat, default)
 
-`combinearg` is the inverse of [`splitarg`](@ref).
+`combinearg` is the inverse of [`splitarg`](@ref). `combinearg` may oneday
+be deprecated in favor of `combineargdef`
 """
 function combinearg(arg_name, arg_type, is_splat, default)
     @assert arg_name !== nothing || arg_type !== nothing
@@ -430,6 +431,8 @@ julia> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
  (:args, :Any, true, nothing)
 ```
 
+`splitarg` may oneday be deprecated in favor of `splitargdef`
+
 See also: [`combinearg`](@ref)
 """
 function splitarg(arg_expr)
@@ -448,6 +451,63 @@ function splitarg(arg_expr)
         x_ => (x, :Any)
     end)::NTuple{2,Any} # the pattern `x_` matches any expression
     return (arg_name, arg_type, is_splat, default)
+end
+
+"""
+    combineargdef(dict)
+
+`combineargdef` is the inverse of [`splitargdef`](@ref).
+"""
+function combineargdef(dict)
+    @assert haskey(dict, :name) || haskey(dict, :type)
+    if haskey(dict, :name)
+        a = dict[:name]
+        a = haskey(dict, :type) ? :($a::$(dict[:type])) : a
+    else
+        a = :(::$(dict[:type]))
+    end
+    a = dict[:is_splat] ? Expr(:..., a) : a
+    return haskey(dict, :default) ? Expr(:kw, a, dict[:default]) : a
+end
+
+"""
+    splitargdef(arg)
+
+Match function arguments (whther from a definition or a function call) such as
+`x::Int=2` and return `Dict(:name=>..., :is_splat=>..., etc.)`. The definition can be rebuilt by
+calling `MacroTools.combineargdef(dict)`.
+For example:
+
+```julia
+julia> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
+4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
+ Dict(:name=>:a, :is_splat=false, :default=>2)
+ Dict(:name=>:x, :type=>:Int, :is_splat=>false)
+ Dict(:name=>:y, :is_splat=>false)
+ Dict(:name=>:args, :is_splat=>true)
+```
+
+See also: [`combineargdef`](@ref)
+"""
+function splitargdef(arg_expr)
+    dict=Dict()
+    if @capture(arg_expr, arg_expr2_ = default_)
+        dict[:default] = default
+    else
+       arg_expr2 = arg_expr
+    end
+    is_splat = @capture(arg_expr2, arg_expr3_...)
+    is_splat || (arg_expr3 = arg_expr2)
+    dict[:is_splat] = is_splat
+    if @capture(arg_expr3, ::T_)
+        dict[:type]=T
+    elseif @capture(arg_expr3, name_::T_)
+        dict[:name]=name
+        dict[:type]=T
+    else
+        dict[:name] = arg_expr3
+    end
+    return dict
 end
 
 
