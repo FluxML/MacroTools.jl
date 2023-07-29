@@ -36,7 +36,7 @@ let
     args = splitdef(:(f(a::Int = 1) = 1))[:args]
     @test map(splitarg, args) == [(:a, :Int, false, 1)]
     args = splitdef(:(f(a::Int ... = 1) = 1))[:args]
-    @test map(splitarg, args) == [(:a, :Int, true, 1)]    # issue 165 
+    @test map(splitarg, args) == [(:a, :Int, true, 1)]    # issue 165
 
     @splitcombine foo(x) = x+2
     @test foo(10) == 12
@@ -88,7 +88,7 @@ end
 @testset "combinestructdef, splitstructdef" begin
     ex = :(struct S end)
     @test ex |> splitstructdef |> combinestructdef |> Base.remove_linenums! ==
-        :(struct S <: Any end)
+        :(struct S <: Any end) |> MacroTools.striplines
 
     @test splitstructdef(ex) == Dict(
         :constructors => Any[],
@@ -101,7 +101,7 @@ end
     ex = :(mutable struct T end)
     @test splitstructdef(ex)[:mutable] === true
     @test ex |> splitstructdef |> combinestructdef |> Base.remove_linenums! ==
-        :(mutable struct T <: Any end)
+        :(mutable struct T <: Any end) |> MacroTools.striplines
 
     ex = :(struct S{A,B} <: AbstractS{B}
                                a::A
@@ -125,7 +125,7 @@ end
     constructors = splitstructdef(ex)[:constructors]
     @test length(constructors) == 1
     @test first(constructors) ==
-        :((S(a::A) where A) = new{A}()) |> MacroTools.flatten
+        :((S(a::A) where A) = new{A}()) |> MacroTools.striplines |> MacroTools.flatten
 
     @test_throws ArgumentError splitstructdef(:(call_ex(arg)))
 end

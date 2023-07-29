@@ -1,4 +1,4 @@
-using MacroTools: isdef
+using MacroTools: isdef, flatten
 
 @testset "utils" begin
     ex1 = :(function foo(a) return a; end)
@@ -22,4 +22,9 @@ using MacroTools: isdef
     @test isdef(ex9)
     ex10 = :(f(a::S, b::T)::Union{S,T} where {S,T} = rand() < 0.5 ? a : b)
     @test isdef(ex10)
+end
+
+@testset "flatten" begin
+    ex = quote try f() catch end end
+    @test flatten(ex) == ex # see julia#50710 and MacroTools#194
 end

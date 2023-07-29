@@ -435,7 +435,7 @@ See also: [`combinearg`](@ref)
 function splitarg(arg_expr)
     if @capture(arg_expr, arg_expr2_ = default_)
       # This assert will only be triggered if a `nothing` literal was somehow spliced into the Expr.
-      # A regular `nothing` default value is a `Symbol` when it gets here. See #178 
+      # A regular `nothing` default value is a `Symbol` when it gets here. See #178
       @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
     else
        arg_expr2 = arg_expr
@@ -458,8 +458,8 @@ function flatten1(ex)
   for x in ex.args
     isexpr(x, :block) ? append!(ex′.args, x.args) : push!(ex′.args, x)
   end
-  # Don't use `unblock` to preserve line nos
-  return length(ex′.args) == 1 ? ex′.args[1] : ex′
+  # Don't use `unblock` to preserve line nos. Check for blocks that contain only a line number node.
+  return length(ex′.args) == 1 && !isline(ex′.args[1]) ? ex′.args[1] : ex′
 end
 
 """
