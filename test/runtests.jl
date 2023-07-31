@@ -8,4 +8,8 @@ include("split.jl")
 include("destruct.jl")
 include("utils.jl")
 
+if VERSION>=v"1.8"
+    include("flatten_try.jl")
+end
+
 end

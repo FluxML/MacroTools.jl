@@ -1,4 +1,4 @@
-using MacroTools: isdef, flatten, striplines
+using MacroTools: flatten, striplines
 
 @testset "utils" begin
     ex1 = :(function foo(a) return a; end)
@@ -24,12 +24,15 @@ using MacroTools: isdef, flatten, striplines
     @test isdef(ex10)
 end
 
-@testset "flatten try" begin # see julia#50710 and MacroTools#194 # only tests that do not include `else` -- for the full set of tests see flatten_try.jl
+@testset "flatten try" begin # see julia#50710 and MacroTools#194
     exs = [
         quote try; f(); catch; end; end,
+        quote try; f(); catch; else; finally; end; end,
+        quote try; f(); catch E; else; finally; end; end,
         quote try; f(); catch; finally; end; end,
         quote try; f(); catch E; finally; end; end,
         quote try; f(); catch E; 3+3; finally; 4+4; end; end,
+        quote try; f(); catch E; 3+3; else; 2+2; finally; 4+4; end; end,
     ]
     for ex in exs
         #@show ex
@@ -38,10 +41,17 @@ end
     exs_bad = [
         quote try; f(); finally; end; end,
         quote try; f(); catch; false; finally; end; end |> striplines, # without striplines the error might not be trigger thanks to spurious line numbers
+        quote try; f(); catch; else; end; end,
+        quote try; f(); catch; else; finally; false; end; end |> striplines, # without striplines the error might not be trigger thanks to spurious line numbers
+        quote try; f(); catch; 3+3; else; 2+2; end; end,
+        quote try; f(); catch E; else; end; end,
+        quote try; f(); catch E; 3+3; else; 2+2; end; end,
     ]
     for ex in exs_bad
         @test_throws ErrorException flatten(ex)
     end
     @test 123 == eval(flatten(striplines(:(try error() catch; 123 finally end))))
     @test 123 == eval(flatten(:(try error() catch; 123 finally end)))
+    @test 234 == eval(flatten(striplines(:(try 1+1 catch; false; else 234; finally end))))
+    @test 234 == eval(flatten(:(try 1+1 catch; false; else 234; finally end)))
 end
