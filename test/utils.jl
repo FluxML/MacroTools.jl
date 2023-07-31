@@ -1,4 +1,4 @@
-using MacroTools: isdef, flatten
+using MacroTools: isdef, flatten, striplines
 
 @testset "utils" begin
     ex1 = :(function foo(a) return a; end)
@@ -24,7 +24,34 @@ using MacroTools: isdef, flatten
     @test isdef(ex10)
 end
 
-@testset "flatten" begin
-    ex = quote try f() catch end end
-    @test flatten(ex) == ex # see julia#50710 and MacroTools#194
+@testset "flatten try" begin # see julia#50710 and MacroTools#194
+    exs = [
+        quote try; f(); catch; end; end,
+        quote try; f(); catch; else; finally; end; end,
+        quote try; f(); catch E; else; finally; end; end,
+        quote try; f(); catch; finally; end; end,
+        quote try; f(); catch E; finally; end; end,
+        quote try; f(); catch E; 3+3; finally; 4+4; end; end,
+        quote try; f(); catch E; 3+3; else; 2+2; finally; 4+4; end; end,
+    ]
+    for ex in exs
+        #@show ex
+        @test flatten(ex) |> striplines == ex |> striplines
+    end
+    exs_bad = [
+        quote try; f(); finally; end; end,
+        quote try; f(); catch; false; finally; end; end |> MacroTools.striplines, # without striplines the error might not be trigger thanks to spurious line numbers
+        quote try; f(); catch; else; end; end,
+        quote try; f(); catch; else; finally; false; end; end |> MacroTools.striplines, # without striplines the error might not be trigger thanks to spurious line numbers
+        quote try; f(); catch; 3+3; else; 2+2; end; end,
+        quote try; f(); catch E; else; end; end,
+        quote try; f(); catch E; 3+3; else; 2+2; end; end,
+    ]
+    for ex in exs_bad
+        @test_throws ErrorException flatten(ex)
+    end
+    @test 123 == eval(MacroTools.flatten(MacroTools.striplines(:(try error() catch; 123 finally end))))
+    @test 123 == eval(MacroTools.flatten(:(try error() catch; 123 finally end)))
+    @test 234 == eval(MacroTools.flatten(MacroTools.striplines(:(try 1+1 catch; false; else 234; finally end))))
+    @test 234 == eval(MacroTools.flatten(:(try 1+1 catch; false; else 234; finally end)))
 end
