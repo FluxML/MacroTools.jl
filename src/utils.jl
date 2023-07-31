@@ -464,26 +464,27 @@ function flatten1(ex)
 end
 
 function flatten_tryblock(ex) # undo the damage potentially done by `flatten1` - the main problem is that `try` expects expressions as arguments, but `quote false end` might get flattened to `false`, leading to ambiguity
+    !isexpr(ex.args[1],:block) && (ex.args[1] = quote $(ex.args[1]) end)
     if length(ex.args) == 3
         # try catch end # 3 args, 2nd is a symbol or false, 3rd is expr
-        !isexpr(ex.args[3]) && (ex.args[3] = quote $(ex.args[3]) end)
+        !isexpr(ex.args[3],:block) && (ex.args[3] = quote $(ex.args[3]) end)
     elseif length(ex.args) == 4
         # try finally end # 4 args, 2nd==3rd==false, 4th is expr
         # try catch finally end # 4 args, 2nd is a symbol or false, 3rd and 4th are expr
         if ex.args[2] == false && ex.args[3] == false
             error("MacroTools.flatten is currently incapable of distinguishing between `try; ...; catch; false; finally; ...; end;` and `try; ...; finally ...; end;`. You are attempting to call flatten on such an expression. To avoid silent garbling of your code we are raising this error. If you need this functionality, please consider helping with issue MacroTools#196 or ask the developers of the end-user library you are using to work around this limitation of MacroTools. A potential quick workaround is to simply add an explicit empty `catch` block.")
         end
-        !isexpr(ex.args[3]) && (ex.args[3] = quote $(ex.args[3]) end)
-        !isexpr(ex.args[4]) && (ex.args[4] = quote $(ex.args[4]) end)
+        !isexpr(ex.args[3],:block) && (ex.args[3] = quote $(ex.args[3]) end)
+        !isexpr(ex.args[4],:block) && (ex.args[4] = quote $(ex.args[4]) end)
     elseif length(ex.args) == 5
         # try catch else end # 5 args, 2nd is a symbol or false, 3rd is expr, 4th is false, 5th is expr
         # try catch else finally end # 5 args, 2nd is a symbol or false, the rest are expr
-        if ex.args[4] == false
-            error("MacroTools.flatten is currently incapable of distinguishing between `try; ...; catch; ...; else; ...; end` and `try; ...; catch; ...; else; ...; finally; false; end`. If you need this functionality, please consider helping with issue MacroTools#196 or ask the developers of the end-user library you are using to work around this limitation of MacroTools. A potential quick workaround is to simply add an explicit empty `finally` block.")
-        end
-        !isexpr(ex.args[3]) && (ex.args[3] = quote $(ex.args[3]) end)
-        !isexpr(ex.args[4]) && (ex.args[4] = quote $(ex.args[4]) end)
-        !isexpr(ex.args[5]) && (ex.args[5] = quote $(ex.args[5]) end)
+        #if ex.args[4] == false # unlike the ambiguity above, this one does not matter, because a `finally; false; end;` block is no-op anyway -- however, simply disregarding it does lead to rather silly "canonical" form where all `try catch else end` get transformed into `try catch else finally; false; end;`
+        #    error("MacroTools.flatten is currently incapable of distinguishing between `try; ...; catch; ...; else; ...; end` and `try; ...; catch; ...; else; ...; finally; false; end`. If you need this functionality, please consider helping with issue MacroTools#196 or ask the developers of the end-user library you are using to work around this limitation of MacroTools. A potential quick workaround is to simply add an explicit empty `finally` block.")
+        #end
+        !isexpr(ex.args[3],:block) && (ex.args[3] = quote $(ex.args[3]) end)
+        !isexpr(ex.args[4],:block) && (ex.args[4] = quote $(ex.args[4]) end)
+        !isexpr(ex.args[5],:block) && (ex.args[5] = quote $(ex.args[5]) end)
     else
         error("MacroTools.flatten has encountered a misformed `try` block. Please report this as a bug.")
     end
