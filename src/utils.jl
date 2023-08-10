@@ -452,7 +452,6 @@ end
 
 
 function flatten1(ex)
-  isexpr(ex, :try) && return flatten_tryblock(ex)
   isexpr(ex, :block) || return ex
   #ex′ = :(;)
   ex′ = Expr(:block)
@@ -463,33 +462,11 @@ function flatten1(ex)
   return length(ex′.args) == 1 ? ex′.args[1] : ex′
 end
 
-function flatten_tryblock(ex) # undo the damage potentially done by `flatten1` - the main problem is that `try` expects expressions as arguments, but `quote false end` might get flattened to `false`, leading to ambiguity
-    !isexpr(ex.args[1],:block) && (ex.args[1] = quote $(ex.args[1]) end)
-    if length(ex.args) == 3
-        # try catch end # 3 args, 2nd is a symbol or false, 3rd is expr
-        !isexpr(ex.args[3],:block) && (ex.args[3] = quote $(ex.args[3]) end)
-    elseif length(ex.args) == 4
-        # try finally end # 4 args, 2nd==3rd==false, 4th is expr
-        # try catch finally end # 4 args, 2nd is a symbol or false, 3rd and 4th are expr
-        if ex.args[2] == false && ex.args[3] == false
-            error("MacroTools.flatten is currently incapable of distinguishing between `try; ...; catch; false; finally; ...; end;` and `try; ...; finally ...; end;`. You are attempting to call flatten on such an expression. To avoid silent garbling of your code we are raising this error. If you need this functionality, please consider helping with issue MacroTools#196 or ask the developers of the end-user library you are using to work around this limitation of MacroTools. A potential quick workaround is to simply add an explicit empty `catch` block.")
-        end
-        !isexpr(ex.args[3],:block) && (ex.args[3] = quote $(ex.args[3]) end)
-        !isexpr(ex.args[4],:block) && (ex.args[4] = quote $(ex.args[4]) end)
-    elseif length(ex.args) == 5
-        # try catch else end # 5 args, 2nd is a symbol or false, 3rd is expr, 4th is false, 5th is expr
-        # try catch else finally end # 5 args, 2nd is a symbol or false, the rest are expr
-        #if ex.args[4] == false # unlike the ambiguity above, this one does not matter, because a `finally; false; end;` block is no-op anyway -- however, simply disregarding it does lead to rather silly "canonical" form where all `try catch else end` get transformed into `try catch else finally; false; end;`
-        #    error("MacroTools.flatten is currently incapable of distinguishing between `try; ...; catch; ...; else; ...; end` and `try; ...; catch; ...; else; ...; finally; false; end`. If you need this functionality, please consider helping with issue MacroTools#196 or ask the developers of the end-user library you are using to work around this limitation of MacroTools. A potential quick workaround is to simply add an explicit empty `finally` block.")
-        #end
-        !isexpr(ex.args[3],:block) && (ex.args[3] = quote $(ex.args[3]) end)
-        !isexpr(ex.args[4],:block) && (ex.args[4] = quote $(ex.args[4]) end)
-        !isexpr(ex.args[5],:block) && (ex.args[5] = quote $(ex.args[5]) end)
-    else
-        error("MacroTools.flatten has encountered a misformed `try` block. Please report this as a bug.")
-    end
-    # TODO find where this is documented in the reference parser
-    return ex
+false_or_bflatten(x) = x==false ? false : bflatten(x)
+
+function bflatten(x)
+    fx = flatten(x)
+    return isexpr(fx, :block) ? fx : Expr(:block,fx)
 end
 
 """
@@ -497,7 +474,30 @@ end
 
 Flatten any redundant blocks into a single block, over the whole expression.
 """
-flatten(ex) = postwalk(flatten1, ex)
+function flatten end
+
+flatten(x) = x
+function flatten(x::Expr)
+  if isexpr(x, :try) # try args can be either false or blocks, but not non-block exprs, so we need to be a bit verbose here
+    isa(x.args[2], Symbol) || x.args[2] == false || error("MacroTools.flatten has encountered a misformed `try` block. Please report this as a bug.")
+    if length(x.args) == 3
+      # try catch end # 3 args, 2nd is a symbol or false, 3rd is block
+      return Expr(x.head, bflatten(x.args[1]), x.args[2], bflatten(x.args[3]))
+    elseif length(x.args) == 4
+      # try finally end # 4 args, 2nd==3rd==false, 4th is block
+      # try catch finally end # 4 args, 2nd is a symbol or false, 3rd and 4th are block
+      return Expr(x.head, bflatten(x.args[1]), x.args[2], false_or_bflatten(x.args[3]), bflatten(x.args[4]))
+    elseif length(x.args) == 5
+      # try catch else end # 5 args, 2nd is a symbol or false, 3rd is block, 4th is false, 5th is block
+      # try catch else finally end # 5 args, 2nd is a symbol or false, the rest are block
+      return Expr(x.head, bflatten(x.args[1]), x.args[2], bflatten(x.args[3]), false_or_bflatten(x.args[4]), bflatten(x.args[5]))
+    else
+      error("MacroTools.flatten has encountered a misformed `try` block. Please report this as a bug.")
+    end
+  else
+    return flatten1(Expr(x.head, map(flatten, x.args)...))
+  end
+end
 
 function makeif(clauses, els = nothing)
   foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), clauses; init=els)

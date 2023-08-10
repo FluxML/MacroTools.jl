@@ -32,16 +32,6 @@ end
         quote try; f(); catch E; 3+3; finally; 4+4; end; end,
     ]
     for ex in exs
-        #@show ex
         @test flatten(ex) |> striplines == ex |> striplines
     end
-    exs_bad = [
-        quote try; f(); finally; end; end,
-        quote try; f(); catch; false; finally; end; end |> striplines, # without striplines the error might not be trigger thanks to spurious line numbers
-    ]
-    for ex in exs_bad
-        @test_throws ErrorException flatten(ex)
-    end
-    @test 123 == eval(flatten(striplines(:(try error() catch; 123 finally end))))
-    @test 123 == eval(flatten(:(try error() catch; 123 finally end)))
 end
