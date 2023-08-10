@@ -24,6 +24,10 @@ using MacroTools: isdef, flatten, striplines
     @test isdef(ex10)
 end
 
+@testset "flatten" begin
+    @test flatten(quote begin; begin; f(); g(); end; begin; h(); end; f(); end; end) |> striplines == quote f(); g(); h(); f() end |> striplines
+end
+
 @testset "flatten try" begin # see julia#50710 and MacroTools#194 # only tests that do not include `else` -- for the full set of tests see flatten_try.jl
     exs = [
         quote try; f(); catch; end; end,
