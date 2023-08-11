@@ -2,6 +2,20 @@ using MacroTools: flatten, striplines
 
 
 @testset "flatten try" begin # see julia#50710 and MacroTools#194
+    # These tests were prompted due to the following two issues:
+    # 1. on all Julia versions `flatten(striplines(:(try catch; false finally false end)))`
+    # was completely breaking the try block due to turning `begin false end` into `false`
+    # which have drastically different interpretations as 3rd or 4th argument of a try block.
+    # 2. only on Julia 1.10, due to the new parser generating slightly more annotations (line number nodes)
+    # `flatten(:(try f() catch end))` was turning into `Expr(:try, call, false, linenumbernode)`
+    # instead of `Expr(:try, call, false, empty_block)`. Downstream consumers of the AST
+    # were not expecting the line number node and were breaking, which is how this issue was
+    # discovered.
+    # The two issues have the same underlying cause: `begin expr end` was being turned into `expr`
+    # which is valid everywhere in julia except in try blocks.
+    # Notice that issue 1 is triggered only if one uses `striplines`. As such it was not really
+    # triggered in the wild. However, issue 2 was seen with the slight modification to
+    # parser annotations in Julia 1.10 which led to the discovery of issue 1.
     exs = [
         quote try; f(); catch; end; end,
         quote try; f(); catch; else; finally; end; end,
