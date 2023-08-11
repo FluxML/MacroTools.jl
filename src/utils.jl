@@ -462,12 +462,9 @@ function flatten1(ex)
   return length(ex′.args) == 1 ? ex′.args[1] : ex′
 end
 
-false_or_bflatten(x) = x==false ? false : bflatten(x)
-
-function bflatten(x)
-    fx = flatten(x)
-    return isexpr(fx, :block) ? fx : Expr(:block,fx)
-end
+# Helper - only flatten the arguments of x
+flatten_args(x::Expr) = Expr(x.head, map(flatten, x.args)...)
+flatten_args(x) = x
 
 """
     flatten(ex)
@@ -478,22 +475,9 @@ function flatten end
 
 flatten(x) = x
 function flatten(x::Expr)
-  if isexpr(x, :try) # try args can be either false or blocks, but not non-block exprs, so we need to be a bit verbose here
-    isa(x.args[2], Symbol) || x.args[2] == false || error("MacroTools.flatten has encountered a misformed `try` block. Please report this as a bug.")
-    if length(x.args) == 3
-      # try catch end # 3 args, 2nd is a symbol or false, 3rd is block
-      return Expr(x.head, bflatten(x.args[1]), x.args[2], bflatten(x.args[3]))
-    elseif length(x.args) == 4
-      # try finally end # 4 args, 2nd==3rd==false, 4th is block
-      # try catch finally end # 4 args, 2nd is a symbol or false, 3rd and 4th are block
-      return Expr(x.head, bflatten(x.args[1]), x.args[2], false_or_bflatten(x.args[3]), bflatten(x.args[4]))
-    elseif length(x.args) == 5
-      # try catch else end # 5 args, 2nd is a symbol or false, 3rd is block, 4th is false, 5th is block
-      # try catch else finally end # 5 args, 2nd is a symbol or false, the rest are block
-      return Expr(x.head, bflatten(x.args[1]), x.args[2], bflatten(x.args[3]), false_or_bflatten(x.args[4]), bflatten(x.args[5]))
-    else
-      error("MacroTools.flatten has encountered a misformed `try` block. Please report this as a bug.")
-    end
+  if isexpr(x, :try) # try args can be either false or blocks, but not non-block exprs, so we need to be a bit explicit here
+    3 <= length(x.args) <= 5  || error("Misformed `try` block.")
+    Expr(x.head, map(flatten_args, x.args)...)
   else
     return flatten1(Expr(x.head, map(flatten, x.args)...))
   end
