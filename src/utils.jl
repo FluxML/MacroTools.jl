@@ -462,9 +462,12 @@ function flatten1(ex)
   return length(ex′.args) == 1 ? ex′.args[1] : ex′
 end
 
-# Helper - only flatten the arguments of x
-flatten_args(x::Expr) = Expr(x.head, map(flatten, x.args)...)
-flatten_args(x) = x
+# Helpers for flattening try blocks
+false_or_symbol_or_bflatten(x) = x==false || isa(x, Symbol) ? x : bflatten(x)
+function bflatten(x) # flatten down to a block (i.e. a single symbol is turned into `begin symbol end`, unlike `flatten` which would just return the symbol)
+    fx = flatten(x)
+    return isexpr(fx, :block) ? fx : Expr(:block,fx)
+end
 
 """
     flatten(ex)
@@ -475,9 +478,14 @@ function flatten end
 
 flatten(x) = x
 function flatten(x::Expr)
-  if isexpr(x, :try) # try args can be either false or blocks, but not non-block exprs, so we need to be a bit explicit here
-    3 <= length(x.args) <= 5  || error("Misformed `try` block.")
-    Expr(x.head, map(flatten_args, x.args)...)
+  if isexpr(x, :try) # try args can be either false or blocks, but not non-block exprs, except for the second argument that has to be false or symbol... so we need to be a bit verbose here
+    3 <= length(x.args) <= 5 || error("Misformed `try` block.")
+    isa(x.args[2], Symbol) || x.args[2] == false || error("Misformed `try` block.")
+    return Expr(x.head, map(false_or_symbol_or_bflatten, x.args)...)
+    # args[2] can be a symbol or false
+    # args[3] can be a block (or false if there is no catch, which requires an else or finally)
+    # args[4] can be a block (or false if there is no finally but there is an else) if it exists
+    # args[5] can only be a block if it exists
   else
     return flatten1(Expr(x.head, map(flatten, x.args)...))
   end

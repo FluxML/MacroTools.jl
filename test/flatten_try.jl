@@ -27,4 +27,12 @@ using MacroTools: flatten, striplines
     @test 123 == eval(flatten(:(try error() catch; 123 finally end)))
     @test 234 == eval(flatten(striplines(:(try 1+1 catch; false; else 234; finally end))))
     @test 234 == eval(flatten(:(try 1+1 catch; false; else 234; finally end)))
+    for (exa, exb) in [
+        (quote try; begin f(); g(); end; catch; end; end,                               quote try; f(); g(); catch; end; end),
+        (quote try; catch; begin f(); g(); end;  end; end,                              quote try; catch; f(); g(); end; end),
+        (quote try; begin f(); g(); end; catch; finally; begin m(); n(); end; end; end, quote try; f(); g(); catch; finally; m(); n(); end; end)
+    ]
+        @test exa |> flatten |> striplines == exb |> striplines
+        @test exa |> striplines |> flatten == (exb |> striplines).args[1]
+    end
 end
