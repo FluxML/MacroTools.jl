@@ -435,7 +435,7 @@ See also: [`combinearg`](@ref)
 function splitarg(arg_expr)
     if @capture(arg_expr, arg_expr2_ = default_)
       # This assert will only be triggered if a `nothing` literal was somehow spliced into the Expr.
-      # A regular `nothing` default value is a `Symbol` when it gets here. See #178 
+      # A regular `nothing` default value is a `Symbol` when it gets here. See #178
       @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
     else
        arg_expr2 = arg_expr
@@ -458,8 +458,15 @@ function flatten1(ex)
   for x in ex.args
     isexpr(x, :block) ? append!(ex′.args, x.args) : push!(ex′.args, x)
   end
-  # Don't use `unblock` to preserve line nos
+  # Don't use `unblock` to preserve line nos.
   return length(ex′.args) == 1 ? ex′.args[1] : ex′
+end
+
+# Helpers for flattening try blocks
+bflatten(x) = x
+function bflatten(x::Expr) # flatten down to a block (i.e. a `begin symbol end` is turned into `begin symbol end`, unlike `flatten` which would just return the symbol)
+    fx = flatten(x)
+    return isexpr(fx, :block) || !isexpr(x, :block) ? fx : Expr(:block,fx)
 end
 
 """
@@ -467,7 +474,22 @@ end
 
 Flatten any redundant blocks into a single block, over the whole expression.
 """
-flatten(ex) = postwalk(flatten1, ex)
+function flatten end
+
+flatten(x) = x
+function flatten(x::Expr)
+  if isexpr(x, :try) # begin _ end can be turned to _ everywhere in julia _except_ in try blocks. See #196 for details
+    3 <= length(x.args) <= 5 || error("Misformed `try` block.")
+    isa(x.args[2], Symbol) || x.args[2] == false || error("Misformed `try` block.")
+    return Expr(x.head, map(bflatten, x.args)...)
+    # args[2] can be a symbol or false
+    # args[3] can be a block (or false if there is no catch, which requires an else or finally)
+    # args[4] can be a block (or false if there is no finally but there is an else) if it exists
+    # args[5] can only be a block if it exists
+  else
+    return flatten1(Expr(x.head, map(flatten, x.args)...))
+  end
+end
 
 function makeif(clauses, els = nothing)
   foldr((c, ex)->:($(c[1]) ? $(c[2]) : $ex), clauses; init=els)
