@@ -24,8 +24,8 @@ using MacroTools: isdef, flatten, striplines
     @test isdef(ex10)
     @test !isdef(:(f()))
     @test !isdef(:ix)
-    @test isdef(:(function f end))  # This is an arbitrary decision (arguably can be called a
-                                    # declaration.
+    @test isdef(:(function f end))  # This is an arbitrary decision. Arguably it could be called a
+                                    # function declaration, and have `isdef` return false.
     @test isdef(:(x -> x+2))
     @test isdef(:(function (y) y - 4 end))
 end
