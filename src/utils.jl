@@ -225,7 +225,8 @@ end
 
 
 "Test for function definition expressions."
-isdef(ex) = isshortdef(ex) || longdef1(ex) !== nothing
+isdef(ex::Expr) = isshortdef(ex) || ex.head == :function
+isdef(ex) = false
 
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
                   (@capture(gatherwheres(fcall)[1],

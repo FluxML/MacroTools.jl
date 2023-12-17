@@ -14,7 +14,7 @@ using MacroTools: isdef, flatten, striplines
 
     ex6 = :(f(a) = a)
     @test isdef(ex6)
-    ex7 = :(f(a)::Int == 1)
+    ex7 = :(f(a)::Int = 1)
     @test isdef(ex7)
     ex8 = :(f(a::T) where T = a)
     @test isdef(ex8)
@@ -22,6 +22,10 @@ using MacroTools: isdef, flatten, striplines
     @test isdef(ex9)
     ex10 = :(f(a::S, b::T)::Union{S,T} where {S,T} = rand() < 0.5 ? a : b)
     @test isdef(ex10)
+    @test !isdef(:(f()))
+    @test !isdef(:ix)
+    @test isdef(:(function f end))  # This is an arbitrary decision (arguably can be called a
+                                    # declaration.
 end
 
 @testset "flatten" begin
