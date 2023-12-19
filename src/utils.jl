@@ -224,8 +224,10 @@ macro expand(ex)
 end
 
 
-"Test for function definition expressions."
-isdef(ex) = isshortdef(ex) || longdef1(ex) !== nothing
+"Test for function definition expressions. `function f end` and anonymous functions are considered
+as function definitions and return true."
+isdef(ex::Expr) = isshortdef(ex) || ex.head == :function || ex.head == :->
+isdef(ex) = false
 
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
                   (@capture(gatherwheres(fcall)[1],
