@@ -1,4 +1,4 @@
-using MacroTools: isdef, flatten, striplines
+using MacroTools: isdef, flatten, striplines, @qq
 
 @testset "utils" begin
     ex1 = :(function foo(a) return a; end)
@@ -45,3 +45,17 @@ end
         @test flatten(ex) |> striplines == ex |> striplines
     end
 end
+
+## Test for @qq
+
+macro my_fff_def(a)
+    @qq function fff() $a end
+end
+
+@my_fff_def begin   # line where fff() is defined
+    function g()    # line where fff()() is defined
+        22
+    end
+end
+
+@test which(fff,()).line == which(fff(),()).line - 1
