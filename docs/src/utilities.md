@@ -43,6 +43,7 @@ MacroTools.combinearg
 
 ```@docs
 MacroTools.@q
+MacroTools.@qq
 MacroTools.isexpr
 MacroTools.rmlines
 MacroTools.unblock

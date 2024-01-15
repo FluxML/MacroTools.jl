@@ -36,6 +36,29 @@ macro q(ex)
   esc(Expr(:quote, striplines(ex)))
 end
 
+struct Flag end
+
+to_flag(ex) = MacroTools.prewalk(x->x isa LineNumberNode ? Flag() : x, ex)
+to_line(l::LineNumberNode, ex) = MacroTools.prewalk(x->x isa Flag ? l : x, ex)
+
+"""
+    @qq [expression]
+
+Like the `quote` keyword but replace construction site line numbers with __source__.
+Line numbers of interpolated expressions are preserved. The result is that line numbers will be
+attributed to the macro usage site, instead of the macro source code.
+
+Only works inside of a macro definition.
+
+See also: [`@q`](@ref)
+"""
+macro qq(ex)
+    # This was a difficult macro to write; the round-trip to Flag appears to be necessary.
+    # Crucially, we want interpolated expressions to preserve their line numbers.
+    esc(:($MacroTools.to_line(__source__, $(Expr(:quote, to_flag(ex))))))
+end
+
+
 """
     isexpr(x, ts...)
 
