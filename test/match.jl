@@ -96,3 +96,9 @@ let
   @capture(ex, $f(args__))
   @test args == [:a, :b]
 end
+
+# https://github.com/FluxML/MacroTools.jl/pull/200
+module TestExplicitImport
+using MacroTools: @capture
+@capture(:(x = 2), _lhs = _rhs)
+end

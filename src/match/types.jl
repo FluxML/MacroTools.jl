@@ -18,7 +18,7 @@ function tbnew(s::Symbol)
   ts = map(Symbol, split(string(s), "_"))
   name = popfirst!(ts)
   ts = (totype(t) for t in ts)
-  Expr(:$, :(MacroTools.TypeBind($(Expr(:quote, name)), Set{Any}([$(ts...)]))))
+  Expr(:$, :($TypeBind($(Expr(:quote, name)), Set{Any}([$(ts...)]))))
 end
 
 match_inner(b::TypeBind, ex, env) =
