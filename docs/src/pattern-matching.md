@@ -91,6 +91,12 @@ Another common use case is to catch symbol literals, e.g.
 
 which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
 
+If you want to match quoted symbols and happen to know that Julia's parser parses
+them as `QuoteNode` then you might try `@capture(ex, s_QuoteNode)` and discover that
+it never matches. This is because expressions are normalized before being matched 
+against the pattern. And `QuoteNode` get normalized to `quote` so to match a quoted 
+symbol you will need `@capture(ex, s_quote) && s.args[1] isa Symbol`
+
 ### Unions
 
 `@capture` can also try to match the expression against one pattern or another,
