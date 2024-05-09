@@ -91,10 +91,18 @@ Another common use case is to catch symbol literals, e.g.
 
 which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
 
-If you want to match quoted symbols and happen to know that Julia's parser parses
-them as `QuoteNode` then you might try `@capture(ex, s_QuoteNode)` and discover that
-it never matches. This is because expressions are normalized before being matched 
-against the pattern. And `QuoteNode` gets normalized to `quote` so to match a quoted 
+If you want to match on quoted symbols like `:(:a)` you might look at the AST Julia
+produces and expect to be able to use the type `QuoteNode` in your pattern. Hence, 
+you would expect the following to produce `1`:
+
+```julia
+@match :(:a) begin
+  s_QuoteNode => 1
+  s_quote => 2
+end
+```
+However, it evaluates to `2` because MacroTools normalizes expressions before comparing 
+them to your pattern. And `QuoteNode` gets normalized to `quote` so to match a quoted 
 symbol you will need `@capture(ex, s_quote) && s.args[1] isa Symbol`
 
 ### Unions
