@@ -1,6 +1,5 @@
 module MacroTools
 
-using Random
 export @match, @capture
 
 include("match/match.jl")
@@ -15,13 +14,7 @@ include("examples/destruct.jl")
 include("examples/threading.jl")
 include("examples/forward.jl")
 
-const animals = Symbol[]
-const animals_file = joinpath(@__DIR__, "..", "animals.txt")
-
 # Load and initialize animals symbols.
-_animals = split(read(animals_file, String))
-resize!(animals, length(_animals))
-animals .= Symbol.(lowercase.(_animals))
-Random.shuffle!(animals)
+const animals = map(Symbol, eachline(joinpath(@__DIR__, "..", "animals.txt")))
 
 end # module

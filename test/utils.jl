@@ -1,5 +1,16 @@
 using MacroTools: isdef, flatten, striplines, @qq
 
+import StableRNGs
+import Random
+
+@testset "animals" begin
+    @test MacroTools.animals isa Vector{Symbol}
+    @test length(MacroTools.animals) == 214
+    @test allunique(MacroTools.animals)
+    @test all(islowercase ∘ first ∘ string, MacroTools.animals)
+    @test MacroTools.animals == Random.shuffle!(StableRNGs.StableRNG(1234), sort(MacroTools.animals))
+end
+
 @testset "utils" begin
     ex1 = :(function foo(a) return a; end)
     @test isdef(ex1)
