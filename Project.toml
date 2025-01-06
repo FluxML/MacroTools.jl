@@ -2,10 +2,8 @@ name = "MacroTools"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 version = "0.5.14"
 
-[deps]
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-
 [compat]
+Test = "<0.0.1, 1"
 julia = "1.6"
 
 [extras]
