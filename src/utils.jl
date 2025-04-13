@@ -262,7 +262,7 @@ function longdef1(ex)
 
     if isexpr(arg, :tuple) && length(arg.args) == 1 && isexpr(arg.args[1], :parameters)
       # Special case (; kws...) ->
-      fcall = Expr(:call, :tuple, arg.args[1])
+      fcall = Expr(:tuple, arg.args[1])
 
       Expr(:function, fcall, body)
     elseif isexpr(arg, :block) && any(a -> isexpr(a, :...) || isexpr(a, :(=)) || isexpr(a, :kw), arg.args)
@@ -278,7 +278,7 @@ function longdef1(ex)
           end
         end
       end
-      fcall = Expr(:call, :tuple, Expr(:parameters, kw_args...), pos_args...)
+      fcall = Expr(:tuple, Expr(:parameters, kw_args...), pos_args...)
 
       Expr(:function, fcall, body)
     elseif isexpr(arg, :...)
