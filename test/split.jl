@@ -83,6 +83,38 @@ let
     @test (@splitcombine function (x::T, y::Vector{U}) where T <: U where U
                (T, U)
            end)(1, Number[2.0]) == (Int, Number)
+           
+    # Test for lambda expressions with keyword arguments
+    @test (@splitcombine (a::Int; b=2) -> a + b)(1) === 3
+    @test (@splitcombine (a::Int; b::Float64=2.0) -> Float64(a) + b)(1) === 3.0
+    @test (@splitcombine (a::Int, x; b=2, c=3) -> a + b + c + x)(1, 4) === 10
+    @test (@splitcombine (a::Int, x=2) -> a + x)(1) === 3
+    @test (@splitcombine (a::Int, x=2; y) -> a + x + y)(1; y=3) === 6
+    @test (@splitcombine (a, x::Int=2; y) -> a + x + y)(1; y=3) === 6
+    @test (@splitcombine (a::Int, x::Int=2; y) -> a + x + y)(1; y=3) === 6
+
+    # With tuple unpacking
+    @test (@splitcombine (((a, b)::Tuple{Int, Int}, c; d=1) -> a + b + c + d))((1, 2), 3; d=4) === 10
+    @test (@splitcombine ((c, (a, b); d=1) -> a + b + c + d))(3, (1, 2); d=4) === 10
+    @test (@splitcombine ((c, (a, b); d) -> a + b + c + d))(3, (1, 2); d=4) === 10
+
+    # Test for single varargs argument in lambda
+    @test splitdef(Meta.parse("(args...) -> 0"))[:args] == [:(args...)]
+    @test (@splitcombine (args...) -> sum(args))(1, 2, 3) == 6
+    @test (@splitcombine (args::Int...) -> sum(args))(1, 2, 3) == 6
+    @test (@splitcombine (args::Int...; y=2) -> sum(args) + y)(1, 2, 3) == 8
+    @test (@splitcombine (arg, args::Int...; y=2) -> arg + sum(args) + y)(1, 2, 3) == 8
+    @test (@splitcombine (::Int...) -> 1)(1, 2, 3) === 1
+
+    # Splatted keyword arguments
+    @test (@splitcombine (a::Int; kws...) -> a + sum(values(kws)))(1; b=2, c=3) == 6
+    @test (@splitcombine (; kws...) -> sum(values(kws)))(b=2, c=3) == 5
+    @test (@splitcombine (a::Int; b, kws...) -> a + b + sum(values(kws)))(1; b=2, c=3) == 6
+    @test (@splitcombine (a::Int; b=2, kws...) -> a + b + sum(values(kws)))(1; c=3) == 6
+
+    # Both splatted positional and keyword arguments
+    @test (@splitcombine (a::Int, args::Int...; kws...) -> a + sum(args) + sum(values(kws)))(1, 2, 3; b=4, c=5) == 15
+    @test (@splitcombine (a, ::Int...; b, kws...) -> a + sum(values(kws)))(1, 2, 3; b=4, c=5) == 1 + 5
 end
 
 @testset "combinestructdef, splitstructdef" begin
