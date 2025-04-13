@@ -259,7 +259,34 @@ isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
 
 function longdef1(ex)
   if @capture(ex, (arg_ -> body_))
-    Expr(:function, arg isa Symbol ? :($arg,) : arg, body)
+
+    if isexpr(arg, :tuple) && length(arg.args) == 1 && isexpr(arg.args[1], :parameters)
+      # Special case (; kws...) ->
+      fcall = Expr(:call, :tuple, arg.args[1])
+
+      Expr(:function, fcall, body)
+    elseif isexpr(arg, :block) && any(a -> isexpr(a, :...) || isexpr(a, :(=)) || isexpr(a, :kw), arg.args)
+      # Has keywords in a block
+      pos_args = []
+      kw_args = []
+      for a in arg.args
+        if !(a isa LineNumberNode)
+          if isexpr(a, :...) || isexpr(a, :(=)) || isexpr(a, :kw)
+            push!(kw_args, a)
+          else
+            push!(pos_args, a)
+          end
+        end
+      end
+      fcall = Expr(:call, :tuple, Expr(:parameters, kw_args...), pos_args...)
+
+      Expr(:function, fcall, body)
+    elseif isexpr(arg, :...)
+      # Special case for a varargs argument
+      Expr(:function, Expr(:tuple, arg), body)
+    else
+      Expr(:function, arg isa Symbol ? :($arg,) : arg, body)
+    end
   elseif isshortdef(ex)
     @assert @capture(ex, (fcall_ = body_))
     Expr(:function, fcall, body)
