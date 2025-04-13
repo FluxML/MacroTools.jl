@@ -351,8 +351,13 @@ function splitdef(fdef)
                               (func_(args__)) |
                               (func_(args__)::rtype_)))
   elseif isexpr(fcall_nowhere, :tuple)
-    if length(fcall_nowhere.args) > 1 && isexpr(fcall_nowhere.args[1], :parameters)
-      args = fcall_nowhere.args[2:end]
+    if length(fcall_nowhere.args) > 0 && isexpr(fcall_nowhere.args[1], :parameters)
+      # Handle both cases: parameters with args and parameters only
+      if length(fcall_nowhere.args) > 1
+        args = fcall_nowhere.args[2:end]
+      else
+        args = []
+      end
       kwargs = fcall_nowhere.args[1].args
     else
       args = fcall_nowhere.args
