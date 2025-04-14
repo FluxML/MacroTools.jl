@@ -115,6 +115,14 @@ let
     # Both splatted positional and keyword arguments
     @test (@splitcombine (a::Int, args::Int...; kws...) -> a + sum(args) + sum(values(kws)))(1, 2, 3; b=4, c=5) == 15
     @test (@splitcombine (a, ::Int...; b, kws...) -> a + sum(values(kws)))(1, 2, 3; b=4, c=5) == 1 + 5
+
+    # Issue with longdef
+    ex = longdef(:((a::Int; b=2) -> a + b))
+    any_kw(ex) = ex isa Expr ? (any_kw(ex.head) || any(any_kw, ex.args)) : ex == :kw
+    @test any_kw(ex)
+    ## ^Ensure we get a :kw expression in the output AST
+    @test eval(ex) isa Function
+    ## Shouldn't have issues evaluating
 end
 
 @testset "combinestructdef, splitstructdef" begin

@@ -271,7 +271,12 @@ function longdef1(ex)
       kw_args = []
       for a in arg.args
         if !(a isa LineNumberNode)
-          if isexpr(a, :...) || isexpr(a, :(=)) || isexpr(a, :kw)
+          if isexpr(a, :...)
+            push!(kw_args, a)
+          elseif isexpr(a, :(=))
+            # Transform = to :kw for keyword arguments
+            push!(kw_args, Expr(:kw, a.args[1], a.args[2]))
+          elseif isexpr(a, :kw)
             push!(kw_args, a)
           else
             push!(pos_args, a)
