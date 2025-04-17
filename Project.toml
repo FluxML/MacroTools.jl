@@ -1,6 +1,6 @@
 name = "MacroTools"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
-version = "0.5.15"
+version = "0.5.16"
 
 [compat]
 Test = "<0.0.1, 1"
