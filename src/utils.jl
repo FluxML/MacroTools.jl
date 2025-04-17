@@ -259,7 +259,39 @@ isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
 
 function longdef1(ex)
   if @capture(ex, (arg_ -> body_))
-    Expr(:function, arg isa Symbol ? :($arg,) : arg, body)
+
+    if isexpr(arg, :tuple) && length(arg.args) == 1 && isexpr(arg.args[1], :parameters)
+      # Special case (; kws...) ->
+      fcall = Expr(:tuple, arg.args[1])
+
+      Expr(:function, fcall, body)
+    elseif isexpr(arg, :block) && any(a -> isexpr(a, :...) || isexpr(a, :(=)) || isexpr(a, :kw), arg.args)
+      # Has keywords in a block
+      pos_args = []
+      kw_args = []
+      for a in arg.args
+        if !(a isa LineNumberNode)
+          if isexpr(a, :...)
+            push!(kw_args, a)
+          elseif isexpr(a, :(=))
+            # Transform = to :kw for keyword arguments
+            push!(kw_args, Expr(:kw, a.args[1], a.args[2]))
+          elseif isexpr(a, :kw)
+            push!(kw_args, a)
+          else
+            push!(pos_args, a)
+          end
+        end
+      end
+      fcall = Expr(:tuple, Expr(:parameters, kw_args...), pos_args...)
+
+      Expr(:function, fcall, body)
+    elseif isexpr(arg, :...)
+      # Special case for a varargs argument
+      Expr(:function, Expr(:tuple, arg), body)
+    else
+      Expr(:function, arg isa Symbol ? :($arg,) : arg, body)
+    end
   elseif isshortdef(ex)
     @assert @capture(ex, (fcall_ = body_))
     Expr(:function, fcall, body)
@@ -324,8 +356,13 @@ function splitdef(fdef)
                               (func_(args__)) |
                               (func_(args__)::rtype_)))
   elseif isexpr(fcall_nowhere, :tuple)
-    if length(fcall_nowhere.args) > 1 && isexpr(fcall_nowhere.args[1], :parameters)
-      args = fcall_nowhere.args[2:end]
+    if length(fcall_nowhere.args) > 0 && isexpr(fcall_nowhere.args[1], :parameters)
+      # Handle both cases: parameters with args and parameters only
+      if length(fcall_nowhere.args) > 1
+        args = fcall_nowhere.args[2:end]
+      else
+        args = []
+      end
       kwargs = fcall_nowhere.args[1].args
     else
       args = fcall_nowhere.args
