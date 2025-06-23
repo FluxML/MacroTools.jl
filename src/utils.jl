@@ -334,7 +334,7 @@ end
 Match any function definition
 
 ```julia
-function name{params}(args; kwargs)::rtype where {whereparams}
+function name{params}(args; kwargs)::rtype where {whereparams} # `params` is used in constructors
    body
 end
 ```

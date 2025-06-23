@@ -98,6 +98,9 @@ let
     @test (@splitcombine ((c, (a, b); d=1) -> a + b + c + d))(3, (1, 2); d=4) === 10
     @test (@splitcombine ((c, (a, b); d) -> a + b + c + d))(3, (1, 2); d=4) === 10
 
+    # With params (constructor)
+    @test splitdef(Meta.parse("A{Float64}(t::T) where {T} = 1"))[:params] == [:Float64]
+
     # Test for single varargs argument in lambda
     @test splitdef(Meta.parse("(args...) -> 0"))[:args] == [:(args...)]
     @test (@splitcombine (args...) -> sum(args))(1, 2, 3) == 6
