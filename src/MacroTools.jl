@@ -1,3 +1,4 @@
+VERSION < v"0.7.0-beta2.199" && __precompile__(true)
 module MacroTools
 
 export @match, @capture
