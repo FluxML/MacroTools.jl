@@ -1,6 +1,19 @@
 export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
   longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg, combinearg
 
+macro public(ex)
+    if VERSION >= v"1.11.0-DEV.469"
+        args = ex isa Symbol ? (ex,) :
+               Base.isexpr(ex, :tuple) ? ex.args :
+               error("@public expects a Symbol or tuple")
+        esc(Expr(:public, args...))
+    else
+        nothing
+    end
+end
+
+@public var"@q", var"@qq", gensym_ids, alias_gensyms, prewalk, postwalk, flatten
+
 """
     assoc!(d, k, v)
 
