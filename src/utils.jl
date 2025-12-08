@@ -123,6 +123,43 @@ end
 striplines(ex) = prewalk(rmlines, ex)
 
 """
+    rmdocs(x)
+
+Remove the documentation macros from the expression.
+
+### Examples
+
+To work with nested blocks:
+
+```julia
+prewalk(rmdocs, ex)
+```
+
+See also: [`rmlines`](@ref)
+"""
+rmdocs(x) = x
+function rmdocs(ex::Expr)
+  if ex.head == :macrocall
+    m = ex.args[1]
+    if isa(m, GlobalRef) && m.mod == Core && m.name == Symbol("@doc")
+      for i ∈ 2:length(ex.args)
+        arg = ex.args[i]
+        if !isline(arg) && isnothing(arg)
+          doc = arg
+          if i < length(ex.args)
+            return ex.args[i + 1]
+          end
+        end
+      end
+      return nothing
+    end
+  end
+  return ex
+end
+
+stripdocs(ex) = prewalk(rmdocs, ex)
+
+"""
     unblock(expr)
 
 Remove outer `begin` blocks from an expression, if the block is
