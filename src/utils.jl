@@ -144,7 +144,7 @@ function rmdocs(ex::Expr)
     if isa(m, GlobalRef) && m.mod == Core && m.name == Symbol("@doc")
       for i ∈ 2:length(ex.args)
         arg = ex.args[i]
-        if !isline(arg) && isnothing(arg)
+        if !isline(arg) && !isnothing(arg)
           doc = arg
           if i < length(ex.args)
             return ex.args[i + 1]
