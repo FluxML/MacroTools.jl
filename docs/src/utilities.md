@@ -46,6 +46,7 @@ MacroTools.@q
 MacroTools.@qq
 MacroTools.isexpr
 MacroTools.rmlines
+MacroTools.rmdocs
 MacroTools.unblock
 MacroTools.namify
 MacroTools.inexpr
