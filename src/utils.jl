@@ -1,4 +1,4 @@
-export @esc, isexpr, isline, iscall, rmlines, unblock, block, inexpr, namify, isdef,
+export @esc, isexpr, isline, iscall, rmlines, rmdocs, unblock, block, inexpr, namify, isdef,
   longdef, shortdef, @expand, makeif, prettify, combinedef, splitdef, splitarg, combinearg
 
 macro public(ex)
@@ -629,6 +629,12 @@ end
     prettify(ex)
 
 Makes generated code generaly nicer to look at.
+
+# Keywords
+- `lines::Bool=false`: whether to preserve line number nodes
+- `alias::Bool=true`: whether to replace gensyms with animal names
+- `docs::Bool=false`: whether to preserve docstrings
 """
-prettify(ex; lines = false, alias = true) =
-  ex |> (lines ? identity : striplines) |> flatten |> unresolve |> resyntax |> (alias ? alias_gensyms : identity)
+prettify(ex; lines=false, alias=true, docs=false) =
+  ex |> (lines ? identity : striplines) |> (docs ? identity : stripdocs) |>flatten |>
+    unresolve |> resyntax |> (alias ? alias_gensyms : identity)

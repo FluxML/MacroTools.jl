@@ -38,6 +38,27 @@ end
     @test isdef(:(function (y) y - 4 end))
 end
 
+@testset "rmlines & rmdocs" begin
+    ex1 = quote
+        foo(x) = x + 1
+    end
+    ex2 = quote
+        "My own documentation"
+        foo(x) = x + 1
+
+        "This is a docstring"
+        bar(x) = x + 2
+    end
+    ex3 = quote
+        foo(x) = x + 1
+        bar(x) = x + 2
+    end
+    @test !any(isline, MacroTools.striplines(ex1).args)
+    @test !any(isline, MacroTools.striplines(ex2).args)
+    @test MacroTools.striplines(MacroTools.stripdocs(ex2)) == MacroTools.striplines(ex3)
+end
+
+
 @testset "flatten" begin
     @test flatten(quote begin; begin; f(); g(); end; begin; h(); end; f(); end; end) |> striplines == quote f(); g(); h(); f() end |> striplines
 end
