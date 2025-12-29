@@ -63,6 +63,12 @@ end
     @test flatten(quote begin; begin; f(); g(); end; begin; h(); end; f(); end; end) |> striplines == quote f(); g(); h(); f() end |> striplines
 end
 
+@testset "prettify" begin
+    # Test that prettify resolves function references to their names
+    @test MacroTools.prettify(:($sin(2))) == :(sin(2))
+    @test MacroTools.prettify(:($cos(x))) == :(cos(x))
+end
+
 @testset "flatten try" begin # see julia#50710 and MacroTools#194 # only tests that do not include `else` -- for the full set of tests see flatten_try.jl
     exs = [
         quote try; f(); catch; end; end,
