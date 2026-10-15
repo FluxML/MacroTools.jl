@@ -4,12 +4,20 @@ on:
     types:
       - created
   workflow_dispatch:
+    inputs:
+      lookback:
+        description: "[DEPRECATED] No longer has any effect"
+        default: "3"
 jobs:
   TagBot:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-      - uses: JuliaRegistries/TagBot@v1
+      - uses: JuliaRegistries/TagBot@ffef3282bcacf1055e4d621a5c010959dfbe59ff # v1.25.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # For commits that modify workflow files: SSH key enables tagging, but
+          # releases require manual creation. For full automation of such commits,
+          # use a PAT with `workflow` scope instead of GITHUB_TOKEN.
+          # See: https://github.com/JuliaRegistries/TagBot#commits-that-modify-workflow-files
           ssh: ${{ secrets.DOCUMENTER_KEY }}
