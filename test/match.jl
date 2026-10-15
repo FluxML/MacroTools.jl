@@ -102,3 +102,63 @@ module TestExplicitImport
 using MacroTools: @capture
 @capture(:(x = 2), _lhs = _rhs)
 end
+
+# https://github.com/FluxML/MacroTools.jl/issues/36
+# https://github.com/FluxML/MacroTools.jl/issues/180
+@testset "type binds inside unions" begin
+  ex = :(x[1])
+  @test @match(ex, begin v_ref => v end) == ex
+  @test @match(ex, begin v_call => v end) === nothing
+  @test @match(:(x(1)), begin v_call => v end) == :(x(1))
+  @test @match(:(x(1)), begin v_ref => v end) === nothing
+
+  @test @match(ex, begin
+    (v_ref | (v_ref <= ub_)) => (v, ub)
+  end) == (ex, nothing)
+  @test @match(:(x <= 2), begin
+    (v_ref | (v_ref <= ub_)) => (v, ub)
+  end) === nothing
+  @test @match(:(x[1] <= 2), begin
+    (v_ref | (v_ref <= ub_)) => (v, ub)
+  end) == (:(x[1]), 2)
+  # the first matching branch wins
+  @test @match(:(x(3) <= 2), begin
+    (v_call | (v_ref <= ub_)) => (v, ub)
+  end) == (:(x(3) <= 2), nothing)
+  @test @match(:(x(3) <= 2), begin
+    ((v_ref <= ub_) | v_call) => (v, ub)
+  end) == (:(x(3) <= 2), nothing)
+  @test @match(:x, begin
+    (v_Symbol | (v_Symbol <= ub_)) => v
+  end) == :x
+
+  m = @capture(:(myvariable = 2), (lhs_Symbol = rhs_) | someotherpat)
+  @test m && (lhs, rhs) == (:myvariable, 2)
+  m = @capture(:x, (a_Symbol) | (a_::b_))
+  @test m && a == :x
+  m = @capture(4, (x_Int | x_String))
+  @test m && x == 4
+  m = @capture("a", (x_Int | x_String))
+  @test m && x == "a"
+  @test !@capture(4.0, (x_Int | x_String))
+  # three-way unions, nested in a larger expression
+  m = @capture(:(f(:a)), f(x_Symbol | x_quote | x_Int))
+  @test m && x == Expr(:quote, :a)
+end
+
+@testset "interpolation inside unions" begin
+  f = :sin
+  m = @capture(:(sin(1)), $f(x_) | cos(x_))
+  @test m && x == 1
+  m = @capture(:(cos(2)), $f(x_) | cos(x_))
+  @test m && x == 2
+  @test !@capture(:(tan(2)), $f(x_) | cos(x_))
+end
+
+@testset "interpolated values are not rewritten" begin
+  my_func = :my_func
+  m = @capture(:(my_func(1)), $(my_func)(x_))
+  @test m && x == 1
+  a, b = 1, 2
+  @test @capture(:(f(3)), f($(a | b)))
+end

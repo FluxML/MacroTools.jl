@@ -26,4 +26,4 @@ match_inner(b::TypeBind, ex, env) =
 
 subtb(s) = s
 subtb(s::Symbol) = tbnew(s)
-subtb(s::Expr) = isexpr(s, :line) ? s : Expr(subtb(s.head), map(subtb, s.args)...)
+subtb(s::Expr) = isexpr(s, :line, :$) ? s : Expr(subtb(s.head), map(subtb, s.args)...)
