@@ -95,6 +95,7 @@ same name (without underscores) in the enclosing scope. In the pattern:
 - `xs__` matches (slurps) a sequence of expressions into a vector;
 - `x_T` only matches an expression of type `T`, or an `Expr` with head `:T`
   (e.g. `x_Symbol`, `x_call`);
+- `xs__T` slurps a sequence of expressions that are all of type `T`;
 - `\$y` matches the value of `y`;
 - `p1 | p2` matches either `p1` or `p2`, trying `p1` first.
 
