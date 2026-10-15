@@ -298,8 +298,9 @@ end
 
 
 "Test for function definition expressions. `function f end` and anonymous functions are considered
-as function definitions and return true."
-isdef(ex::Expr) = isshortdef(ex) || ex.head == :function || ex.head == :->
+as function definitions and return true. Like `splitdef`, a redundant outer `begin` block around a
+single definition is ignored (see `unblock`)."
+isdef(ex::Expr) = (ex = unblock(ex); isshortdef(ex) || isexpr(ex, :function, :->))
 isdef(ex) = false
 
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&

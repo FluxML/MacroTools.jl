@@ -36,6 +36,15 @@ end
                                     # function declaration, and have `isdef` return false.
     @test isdef(:(x -> x+2))
     @test isdef(:(function (y) y - 4 end))
+
+    # #204: a block wrapping a single definition is a definition, as in `splitdef`
+    @test isdef(quote f(x) = x end)
+    @test isdef(quote function f(x) x end end)
+    @test isdef(quote x -> x + 2 end)
+    @test isdef(quote function f end end)
+    @test isdef(quote begin function f(x) x end end end)
+    @test !isdef(quote f(x) = x; g(x) = x end)
+    @test !isdef(quote x end)
 end
 
 @testset "rmlines & rmdocs" begin
