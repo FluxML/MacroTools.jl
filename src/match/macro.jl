@@ -63,9 +63,9 @@ macro capture(ex, pat)
   bs = allbindings(pat)
   pat = subor(subtb(pat))
   quote
-    $([:($(esc(b)) = nothing) for b in bs]...)
     env = trymatch($(esc(Expr(:quote, pat))), $(esc(ex)))
     if env === nothing
+      $([:($(esc(b)) = nothing) for b in bs]...)
       false
     else
       $([:($(esc(b)) = get(env, $(esc(Expr(:quote, b))), nothing)) for b in bs]...)

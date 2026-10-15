@@ -97,6 +97,22 @@ let
   @test args == [:a, :b]
 end
 
+# Bindings may reuse the name of the subject or of an interpolated variable
+# https://github.com/FluxML/MacroTools.jl/issues/94
+@testset "bindings shadowing inputs" begin
+  ex = :(1 + 2)
+  m = @capture(ex, ex_ + b_)
+  @test m && (ex, b) == (1, 2)
+  ex = :(f(x))
+  @test !@capture(ex, ex_ + b_)
+  @test ex === nothing && b === nothing
+  x = :x
+  m = @capture(:(f(1, x)), f(x_, $x))
+  @test m && x == 1
+  ex = :(1 + 2)
+  @test @match(ex, begin ex_ + b_ => (ex, b) end) == (1, 2)
+end
+
 # Names containing underscores are read as expression types; macro names never
 # are, and other names can be matched literally by interpolating them.
 # https://github.com/FluxML/MacroTools.jl/issues/192
