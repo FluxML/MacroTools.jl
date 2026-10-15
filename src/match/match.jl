@@ -99,6 +99,7 @@ function match(pat, ex, env)
   pat = normalise(pat)
   pat === :_ && return env
   isbinding(pat) && return store!(env, bname(pat), ex)
+  pat isa OrBind && return match_inner(pat, ex, env) # each branch normalises `ex` itself
   ex = normalise(ex)
   pat, ex = blockunify(pat, ex)
   isslurp(pat) && return store!(env, bname(pat), Any[ex])

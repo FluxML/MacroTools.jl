@@ -19,12 +19,14 @@ function isor(ex)
   return false
 end
 
-function ornew(ex)
-  isor(ex) || return ex
-  or_(ex.args[2:end]...)
-end
+# Like type binds, unions are spliced into the pattern as `$(OrBind(...))`, with
+# each branch quoted, so that interpolations and type binds inside the branches
+# get evaluated along with the rest of the pattern (#36).
+ornew(a, b) = Expr(:$, :($OrBind($(Expr(:quote, a)), $(Expr(:quote, b)))))
 
 subor(s) = s
-subor(s::Symbol) = s
-subor(s::Expr) = isor(s) ? subor(ornew(s)) : Expr(s.head, map(subor, s.args)...)
-subor(s::OrBind) = OrBind(subor(s.pat1), subor(s.pat2))
+function subor(s::Expr)
+  isexpr(s, :$) && return s
+  isor(s) || return Expr(s.head, map(subor, s.args)...)
+  foldl(ornew, map(subor, s.args[2:end]))
+end

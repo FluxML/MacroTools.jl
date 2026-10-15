@@ -19,7 +19,7 @@ function tbnew(s::Symbol)
   ts = map(Symbol, split(string(s), "_"))
   name = popfirst!(ts)
   ts = (totype(t) for t in ts)
-  Expr(:$, :($TypeBind($(Expr(:quote, name)), Set{Any}([$(ts...)]))))
+  Expr(:$, :($TypeBind($(Expr(:quote, name)), $(Set{Any})([$(ts...)]))))
 end
 
 match_inner(b::TypeBind, ex, env) =
@@ -27,4 +27,4 @@ match_inner(b::TypeBind, ex, env) =
 
 subtb(s) = s
 subtb(s::Symbol) = tbnew(s)
-subtb(s::Expr) = isexpr(s, :line) ? s : Expr(subtb(s.head), map(subtb, s.args)...)
+subtb(s::Expr) = isexpr(s, :line, :$) ? s : Expr(subtb(s.head), map(subtb, s.args)...)

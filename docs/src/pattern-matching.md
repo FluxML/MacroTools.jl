@@ -140,6 +140,18 @@ expressions, e.g.
 matches a function definition like `func(a::T) where {T<:Number} = supertype(T)`, with a single type parameter bound to `T` if possible.
 If not, `T = nothing`.
 
+Each branch can use any of the syntax above, including expression types and
+interpolation:
+
+```julia
+@capture(ex, x_Symbol | (x_Symbol::T_))
+```
+
+Branches are tried from left to right and the first one that matches wins, so
+put more specific patterns first: `T_ | T_{params__}` will always bind `T` to the
+whole expression, while `T_{params__} | T_` binds the name and parameters
+separately when there are any.
+
 ## Expression Walking
 
 If you've ever written any more interesting macros, you've probably found
