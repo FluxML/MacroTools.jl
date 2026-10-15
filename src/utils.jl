@@ -601,6 +601,8 @@ function flatten(x::Expr)
     # args[5] can only be a block if it exists
   elseif isexpr(x, :do) && length(x.args) == 2 && isexpr(x.args[2], :->) # the body of a `do` must stay a block (Base's printer relies on it). See #84
     return Expr(:do, flatten(x.args[1]), Expr(:->, map(bflatten, x.args[2].args)...))
+  elseif isexpr(x, :struct, :module, :macro) # their bodies must stay blocks too, or `eval` rejects them
+    return Expr(x.head, map(bflatten, x.args)...)
   else
     return flatten1(Expr(x.head, map(flatten, x.args)...))
   end

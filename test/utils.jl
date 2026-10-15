@@ -91,6 +91,16 @@ end
     @test eval(MacroTools.prettify(quote map(1:3) do n; abs2(n); end end)) == [1, 4, 9]
 end
 
+@testset "flatten/prettify struct, module and macro bodies" begin # they must stay blocks
+    for ex in (:(struct A; x; end), :(module M; f() = 1; end), :(baremodule M; x = 1; end),
+               :(macro m(x); x; end), :(struct A; begin x; end; end))
+        p = MacroTools.prettify(ex)
+        @test isexpr(p.args[end], :block)
+        @test Core.eval(Module(), p) isa Any # evaluates without a syntax error
+    end
+    @test MacroTools.prettify(:(struct A; begin x; end; end)).args[3] == Expr(:block, :x)
+end
+
 @testset "flatten try" begin # see julia#50710 and MacroTools#194 # only tests that do not include `else` -- for the full set of tests see flatten_try.jl
     exs = [
         quote try; f(); catch; end; end,
