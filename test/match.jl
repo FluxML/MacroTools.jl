@@ -97,6 +97,29 @@ let
   @test args == [:a, :b]
 end
 
+# Names containing underscores are read as expression types; macro names never
+# are, and other names can be matched literally by interpolating them.
+# https://github.com/FluxML/MacroTools.jl/issues/192
+# https://github.com/FluxML/MacroTools.jl/pull/160
+@testset "names containing underscores" begin
+  m = @capture(:(@code_warntype f(1)), @code_warntype args__)
+  @test m && args == [:(f(1))]
+  ok = @capture(:(@code_warntype f(1)), @mac_ args__)
+  @test ok && mac == Symbol("@code_warntype")
+  @test !@capture(:(@show f(1)), @code_warntype args__)
+
+  ex = :(global_string = 10)
+  @test !@capture(ex, global_string = n_)
+  m = @capture(ex, $(:global_string) = n_)
+  @test m && n == 10
+  name = :global_string
+  m = @capture(ex, $name = n_)
+  @test m && n == 10
+  @test @match(:(my_func(1)), begin
+    $(:my_func)(x_) => x
+  end) == 1
+end
+
 # https://github.com/FluxML/MacroTools.jl/pull/200
 module TestExplicitImport
 using MacroTools: @capture

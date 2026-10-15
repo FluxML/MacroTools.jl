@@ -91,6 +91,21 @@ Another common use case is to catch symbol literals, e.g.
 
 which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
 
+Because of this syntax, any symbol that contains an underscore (but doesn't end
+with one) is read as an expression type, so a name like `global_string` in a
+pattern does not match itself: it binds `global` to an `Expr(:string, ...)`.
+To match such a name literally, interpolate it:
+
+```julia
+julia> @capture(:(global_string = 10), global_string = n_)
+false
+
+julia> @capture(:(global_string = 10), $(:global_string) = n_)
+true
+```
+
+Macro names such as `@code_warntype` are always matched literally.
+
 If you want to match on quoted symbols like `:(:a)` you might look at the AST Julia
 produces and expect to be able to use the type `QuoteNode` in your pattern. Hence, 
 you would expect the following to produce `1`:
