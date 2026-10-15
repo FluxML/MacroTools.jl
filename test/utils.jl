@@ -78,6 +78,19 @@ end
     @test MacroTools.prettify(:($cos(x))) == :(cos(x))
 end
 
+@testset "flatten/prettify do blocks" begin # #84: the body of a `do` must stay a block
+    ex = MacroTools.prettify(quote map(1:N) do n; f(n); end end)
+    @test isexpr(ex, :do) && isexpr(ex.args[2].args[2], :block)
+    @test ex.args[2].args[2].args == [:(f(n))]
+    @test occursin("f(n)", string(ex))
+    @test string(MacroTools.prettify(quote map(xs) do x; x end end)) == "map(xs) do x\n    x\nend"
+    @test string(MacroTools.prettify(quote map(xs) do x; begin g(x); end; begin h(x); k(x); end; end end)) ==
+        "map(xs) do x\n    g(x)\n    h(x)\n    k(x)\nend"
+    @test flatten(striplines(:(f() do; g(); end))).args[2].args[2] == Expr(:block, :(g()))
+    @test isexpr(flatten(striplines(:(f() do; end))).args[2].args[2], :block)
+    @test eval(MacroTools.prettify(quote map(1:3) do n; abs2(n); end end)) == [1, 4, 9]
+end
+
 @testset "flatten try" begin # see julia#50710 and MacroTools#194 # only tests that do not include `else` -- for the full set of tests see flatten_try.jl
     exs = [
         quote try; f(); catch; end; end,

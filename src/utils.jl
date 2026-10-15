@@ -599,6 +599,8 @@ function flatten(x::Expr)
     # args[3] can be a block (or false if there is no catch, which requires an else or finally)
     # args[4] can be a block (or false if there is no finally but there is an else) if it exists
     # args[5] can only be a block if it exists
+  elseif isexpr(x, :do) && length(x.args) == 2 && isexpr(x.args[2], :->) # the body of a `do` must stay a block (Base's printer relies on it). See #84
+    return Expr(:do, flatten(x.args[1]), Expr(:->, map(bflatten, x.args[2].args)...))
   else
     return flatten1(Expr(x.head, map(flatten, x.args)...))
   end
