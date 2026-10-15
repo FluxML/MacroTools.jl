@@ -15,7 +15,7 @@ macro forward(ex, fs)
   T = esc(T)
   fs = isexpr(fs, :tuple) ? map(esc, fs.args) : [esc(fs)]
   :($([:($f(x::$T, args...; kwargs...) =
-         (Base.@_inline_meta; $f(x.$field, args...; kwargs...)))
+         (@inline; $f(x.$field, args...; kwargs...)))
        for f in fs]...);
     nothing)
 end

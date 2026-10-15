@@ -608,11 +608,7 @@ function makeif(clauses, els = nothing)
 end
 
 unresolve1(x) = x
-@static if VERSION >= v"1.12-"
-    unresolve1(f::Function) = nameof(f)
-else
-    unresolve1(f::Function) = methods(f).mt.name
-end
+unresolve1(f::Function) = nameof(f)
 
 unresolve(ex) = prewalk(unresolve1, ex)
 
