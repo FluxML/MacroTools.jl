@@ -162,3 +162,17 @@ end
   a, b = 1, 2
   @test @capture(:(f(3)), f($(a | b)))
 end
+
+# https://github.com/FluxML/MacroTools.jl/issues/193
+@testset "unions match whatever their branches match" begin
+  ex = :(begin; x = 2; y = 3; end)
+  @test @capture(ex, begin body_ end)
+  m = @capture(ex, begin body_ end | for i_ in iter_ forbody_ end)
+  @test m && body == ex
+  ex = :(begin; x = 2; end)
+  m = @capture(ex, begin body_ end | for i_ in iter_ forbody_ end)
+  @test m && body == ex
+  ex = :(for i in 1:3; f(i); end)
+  m = @capture(ex, for i_ in iter_ forbody_ end | begin body_ end)
+  @test m && (i, iter, body) == (:i, :(1:3), nothing)
+end
