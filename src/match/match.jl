@@ -21,6 +21,8 @@ function store!(env, name, ex)
   assoc!(env, name, ex)
 end
 
+slurp!(env, p, xs) = store!(env, bname(p), xs)
+
 isbinding(s) = false
 isbinding(s::Symbol) = occursin(r"[^_]_(_str)?$", string(s))
 
@@ -61,7 +63,7 @@ function match_inner(pat::Expr, ex::Expr, env)
   i = 1
   for p in pat.args
     i > length(ex.args) &&
-      (isslurp(p) ? @trymatch(store!(env, bname(p), slurp)) : @nomatch(pat, ex))
+      (isslurp(p) ? @trymatch(slurp!(env, p, slurp)) : @nomatch(pat, ex))
 
     while inrange(i, sr, length(ex.args))
       push!(slurp, ex.args[i])
@@ -69,7 +71,7 @@ function match_inner(pat::Expr, ex::Expr, env)
     end
 
     if isslurp(p)
-      p !== :__ && @trymatch store!(env, bname(p), slurp)
+      p !== :__ && @trymatch slurp!(env, p, slurp)
     else
       @trymatch match(p, ex.args[i], env)
       i += 1
@@ -102,7 +104,7 @@ function match(pat, ex, env)
   pat isa OrBind && return match_inner(pat, ex, env) # each branch normalises `ex` itself
   ex = normalise(ex)
   pat, ex = blockunify(pat, ex)
-  isslurp(pat) && return store!(env, bname(pat), Any[ex])
+  isslurp(pat) && return slurp!(env, pat, Any[ex])
   return match_inner(pat, ex, env)::Union{typeof(env),MatchError,Nothing}
 end
 

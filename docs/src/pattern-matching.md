@@ -91,6 +91,25 @@ Another common use case is to catch symbol literals, e.g.
 
 which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
 
+Slurps can be typed too: `s__Symbol` slurps a sequence of arguments, and only
+matches if every one of them is a `Symbol`:
+
+```julia
+julia> @capture(:(f(a, b, c)), f(s__Symbol))
+true
+
+julia> s
+3-element Vector{Any}:
+ :a
+ :b
+ :c
+
+julia> @capture(:(f(a, b, 1)), f(s__Symbol))
+false
+```
+
+As with single expressions, `s__Symbol_Int` accepts either type.
+
 Because of this syntax, any symbol that contains an underscore (but doesn't end
 with one) is read as an expression type, so a name like `global_string` in a
 pattern does not match itself: it binds `global` to an `Expr(:string, ...)`.

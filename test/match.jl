@@ -236,3 +236,68 @@ end
   @test matchfoo(:(f(1))) === nothing
 end
 end
+
+# https://github.com/FluxML/MacroTools.jl/issues/31
+@testset "typed slurps" begin
+  m = @capture(:(f(a, b, c)), f(s__Symbol))
+  @test m && s == [:a, :b, :c]
+  @test !@capture(:(f(a, b, 1)), f(s__Symbol))
+  @test s === nothing
+  m = @capture(:(f(1, a, b)), f(x_, s__Symbol))
+  @test m && x == 1 && s == [:a, :b]
+  m = @capture(:(f(a, b, 1)), f(s__Symbol, y_Int))
+  @test m && s == [:a, :b] && y == 1
+  @test !@capture(:(f(a, g(b), 1)), f(s__Symbol, y_Int))
+  m = @capture(:(f(a, 1)), f(s__Symbol_Int))
+  @test m && s == [:a, 1]
+  @test !@capture(:(f(a, 1.0)), f(s__Symbol_Int))
+  m = @capture(:(f()), f(s__Symbol))
+  @test m && s == Any[]
+  m = @capture(:(f(g(1), h(2))), f(s__call))
+  @test m && s == [:(g(1)), :(h(2))]
+  # elements are normalised before the type test, like single type binds
+  m = @capture(:(f(:a, :b)), f(s__quote))
+  @test m && s == [QuoteNode(:a), QuoteNode(:b)]
+  # anonymous typed slurp
+  @test @capture(:(f(a, b)), f(__Symbol))
+  @test !@capture(:(f(a, 1)), f(__Symbol))
+  # a whole expression
+  m = @capture(:a, s__Symbol)
+  @test m && s == [:a]
+  @test !@capture(1, s__Symbol)
+
+  block = quote
+    begin
+      north
+      east
+      south
+      west
+    end
+  end
+  @test @match(block, begin
+    begin
+      s__Symbol
+    end => s
+  end) == [:north, :east, :south, :west]
+  @test @match(:(begin; north; 1; end), begin
+    begin s__Symbol end => s
+    begin s__ end => length(s)
+  end) == 2
+
+  # inside unions
+  m = @capture(:(f(a, b)), f(s__Symbol) | g(s__Int))
+  @test m && s == [:a, :b]
+  m = @capture(:(g(1, 2)), f(s__Symbol) | g(s__Int))
+  @test m && s == [1, 2]
+  @test !@capture(:(g(a, b)), f(s__Symbol) | g(s__Int))
+
+  @test_throws "Invalid expression type pattern" macroexpand(@__MODULE__, :(@capture(ex, f(s___Symbol))))
+
+  # existing syntax is unaffected
+  m = @capture(:(f(a, 1)), f(s__))
+  @test m && s == [:a, 1]
+  m = @capture(:(f(a, 1)), f(x_Symbol, y_Int))
+  @test m && (x, y) == (:a, 1)
+  @test @capture(:(f(a, 1)), f(__))
+  @test @capture(:(f(a, 1)), f(_, _))
+end

@@ -3,6 +3,12 @@ struct TypeBind
   ts::Set{Any}
 end
 
+# `x__T` slurps a sequence of expressions that all have type `T` (#31)
+struct TypeSlurp
+  name::Symbol
+  ts::Set{Any}
+end
+
 istb(s) = false
 istb(s::Symbol) = !(endswith(string(s), "_") ||
                     endswith(string(s), "_str") ||
@@ -18,12 +24,20 @@ function tbnew(s::Symbol)
   istb(s) || return s
   ts = map(Symbol, split(string(s), "_"))
   name = popfirst!(ts)
+  T = ts[1] === Symbol("") ? (popfirst!(ts); TypeSlurp) : TypeBind
+  Symbol("") in ts && error("Invalid expression type pattern `$s`")
   ts = (totype(t) for t in ts)
-  Expr(:$, :($TypeBind($(Expr(:quote, name)), $(Set{Any})([$(ts...)]))))
+  Expr(:$, :($T($(Expr(:quote, name)), $(Set{Any})([$(ts...)]))))
 end
 
 match_inner(b::TypeBind, ex, env) =
   isexpr(ex, b.ts...) ? (env[tbname(b)] = ex; env) : @nomatch(b, ex)
+
+isslurp(s::TypeSlurp) = true
+bname(s::TypeSlurp) = s.name
+
+slurp!(env, s::TypeSlurp, xs) =
+  all(x -> isexpr(normalise(x), s.ts...), xs) ? store!(env, s.name, xs) : @nomatch(s, xs)
 
 subtb(s) = s
 subtb(s::Symbol) = tbnew(s)
