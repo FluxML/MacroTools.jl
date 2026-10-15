@@ -466,7 +466,7 @@ function combinedef(dict::Dict)
     # We need the `if` to handle parametric inner/outer constructors like
     # SomeType{X}(x::X) where X = SomeType{X}(x, x+2)
     if isempty(wparams)
-      if rtype==nothing
+      if rtype === nothing
         @q(function $name_param($(dict[:args]...);
                                 $(dict[:kwargs]...))
           $(body.args...)
@@ -478,7 +478,7 @@ function combinedef(dict::Dict)
           end)
       end
     else
-      if rtype==nothing
+      if rtype === nothing
         @q(function $name_param($(dict[:args]...);
                                 $(dict[:kwargs]...)) where {$(wparams...)}
           $(body.args...)
@@ -497,13 +497,13 @@ function combinedef(dict::Dict)
       arg = Expr(:tuple, Expr(:parameters, dict[:kwargs]...), dict[:args]...)
     end
     if isempty(wparams)
-      if rtype==nothing
+      if rtype === nothing
         @q($arg -> $body)
       else
         @q(($arg::$rtype) -> $body)
       end
     else
-      if rtype==nothing
+      if rtype === nothing
         @q(($arg where {$(wparams...)}) -> $body)
       else
         @q(($arg::$rtype where {$(wparams...)}) -> $body)
@@ -520,7 +520,7 @@ end
 function combinearg(arg_name, arg_type, is_splat, default)
     @assert arg_name !== nothing || arg_type !== nothing
     a = arg_name===nothing ? :(::$arg_type) :
-        arg_type==:Any && is_splat ? arg_name :   # see #177 and julia#43625
+        arg_type === :Any && is_splat ? arg_name :   # see #177 and julia#43625
             :($arg_name::$arg_type)
     a2 = is_splat ? Expr(:..., a) : a
     return default === nothing ? a2 : Expr(:kw, a2, default)
