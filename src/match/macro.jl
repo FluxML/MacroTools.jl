@@ -24,7 +24,7 @@ function makeclause(pat, yes, els = nothing)
   bs = allbindings(pat)
   pat = subor(subtb(pat))
   quote
-    env = trymatch($(Expr(:quote, pat)), ex)
+    env = trymatch($(esc(Expr(:quote, pat))), ex)
     if env !== nothing
       $(bindinglet(bs, esc(yes)))
     else

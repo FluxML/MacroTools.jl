@@ -176,3 +176,24 @@ end
   m = @capture(ex, for i_ in iter_ forbody_ end | begin body_ end)
   @test m && (i, iter, body) == (:i, :(1:3), nothing)
 end
+
+# Interpolations and type binds in `@match` are evaluated in the caller's scope
+module TestMatchScope
+using MacroTools, Test
+struct Foo end
+matchname(ex, name) = @match ex begin
+  $name => :same
+  _ => :different
+end
+matchfoo(ex) = @match ex begin
+  (x_Foo | f(x_Foo)) => x
+  _ => nothing
+end
+@testset "@match scope" begin
+  @test matchname(:a, :a) === :same
+  @test matchname(:a, :b) === :different
+  @test matchfoo(Foo()) === Foo()
+  @test matchfoo(Expr(:call, :f, Foo())) === Foo()
+  @test matchfoo(:(f(1))) === nothing
+end
+end
