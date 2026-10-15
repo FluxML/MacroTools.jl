@@ -66,6 +66,52 @@ julia> a, b, c
 Slurps don't have to be at the end of an expression, but like the
 Highlander there can only be one (per expression).
 
+```@docs
+MacroTools.@capture
+```
+
+### Matching multiple patterns
+
+To try several patterns in turn, use `@match`. Each line of the block is a
+clause of the form `pattern => result`; clauses are tried from top to bottom,
+and the `result` of the first matching pattern is evaluated with that pattern's
+bindings in scope:
+
+```julia
+julia> describe(ex) = @match ex begin
+         f_(xs__) => "a call to $f with $(length(xs)) arguments"
+         (x_ = y_) => "an assignment to $x"
+         s_Symbol => "the symbol $s"
+         _ => "something else"
+       end
+describe (generic function with 1 method)
+
+julia> describe(:(foo(1, 2))), describe(:(a = 1)), describe(:a), describe(1)
+("a call to foo with 2 arguments", "an assignment to a", "the symbol a", "something else")
+```
+
+Since `_` matches anything it makes a good default; without one, `@match`
+returns `nothing` when no clause matches.
+
+Because `=>` is right-associative, matching a `Pair` expression like `:(a => b)`
+needs parentheses around the pattern:
+
+```julia
+julia> @match :(a => b) begin
+         (x_ => y_) => (x, y)
+         _ => :unmatched
+       end
+(:a, :b)
+```
+
+Without them, `x_ => y_ => (x, y)` parses as `x_ => (y_ => (x, y))`: a clause
+whose pattern `x_` matches anything, and whose result `y_ => (x, y)` then throws
+an `UndefVarError`.
+
+```@docs
+MacroTools.@match
+```
+
 ### Matching on expression type
 
 `@capture` can match expressions by their type, which is either the `head` of `Expr`
@@ -90,6 +136,25 @@ Another common use case is to catch symbol literals, e.g.
 ```
 
 which will match e.g. `struct Foo ...` but not `struct Foo{V} ...`
+
+Slurps can be typed too: `s__Symbol` slurps a sequence of arguments, and only
+matches if every one of them is a `Symbol`:
+
+```julia
+julia> @capture(:(f(a, b, c)), f(s__Symbol))
+true
+
+julia> s
+3-element Vector{Any}:
+ :a
+ :b
+ :c
+
+julia> @capture(:(f(a, b, 1)), f(s__Symbol))
+false
+```
+
+As with single expressions, `s__Symbol_Int` accepts either type.
 
 Because of this syntax, any symbol that contains an underscore (but doesn't end
 with one) is read as an expression type, so a name like `global_string` in a

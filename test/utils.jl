@@ -36,6 +36,15 @@ end
                                     # function declaration, and have `isdef` return false.
     @test isdef(:(x -> x+2))
     @test isdef(:(function (y) y - 4 end))
+
+    # #204: a block wrapping a single definition is a definition, as in `splitdef`
+    @test isdef(quote f(x) = x end)
+    @test isdef(quote function f(x) x end end)
+    @test isdef(quote x -> x + 2 end)
+    @test isdef(quote function f end end)
+    @test isdef(quote begin function f(x) x end end end)
+    @test !isdef(quote f(x) = x; g(x) = x end)
+    @test !isdef(quote x end)
 end
 
 @testset "rmlines & rmdocs" begin
@@ -67,6 +76,29 @@ end
     # Test that prettify resolves function references to their names
     @test MacroTools.prettify(:($sin(2))) == :(sin(2))
     @test MacroTools.prettify(:($cos(x))) == :(cos(x))
+end
+
+@testset "flatten/prettify do blocks" begin # #84: the body of a `do` must stay a block
+    ex = MacroTools.prettify(quote map(1:N) do n; f(n); end end)
+    @test isexpr(ex, :do) && isexpr(ex.args[2].args[2], :block)
+    @test ex.args[2].args[2].args == [:(f(n))]
+    @test occursin("f(n)", string(ex))
+    @test string(MacroTools.prettify(quote map(xs) do x; x end end)) == "map(xs) do x\n    x\nend"
+    @test string(MacroTools.prettify(quote map(xs) do x; begin g(x); end; begin h(x); k(x); end; end end)) ==
+        "map(xs) do x\n    g(x)\n    h(x)\n    k(x)\nend"
+    @test flatten(striplines(:(f() do; g(); end))).args[2].args[2] == Expr(:block, :(g()))
+    @test isexpr(flatten(striplines(:(f() do; end))).args[2].args[2], :block)
+    @test eval(MacroTools.prettify(quote map(1:3) do n; abs2(n); end end)) == [1, 4, 9]
+end
+
+@testset "flatten/prettify struct, module and macro bodies" begin # they must stay blocks
+    for ex in (:(struct A; x; end), :(module M; f() = 1; end), :(baremodule M; x = 1; end),
+               :(macro m(x); x; end), :(struct A; begin x; end; end))
+        p = MacroTools.prettify(ex)
+        @test isexpr(p.args[end], :block)
+        @test Core.eval(Module(), p) isa Any # evaluates without a syntax error
+    end
+    @test MacroTools.prettify(:(struct A; begin x; end; end)).args[3] == Expr(:block, :x)
 end
 
 @testset "flatten try" begin # see julia#50710 and MacroTools#194 # only tests that do not include `else` -- for the full set of tests see flatten_try.jl

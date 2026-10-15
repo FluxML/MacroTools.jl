@@ -298,8 +298,9 @@ end
 
 
 "Test for function definition expressions. `function f end` and anonymous functions are considered
-as function definitions and return true."
-isdef(ex::Expr) = isshortdef(ex) || ex.head == :function || ex.head == :->
+as function definitions and return true. Like `splitdef`, a redundant outer `begin` block around a
+single definition is ignored (see `unblock`)."
+isdef(ex::Expr) = (ex = unblock(ex); isshortdef(ex) || isexpr(ex, :function, :->))
 isdef(ex) = false
 
 isshortdef(ex) = (@capture(ex, (fcall_ = body_)) &&
@@ -466,7 +467,7 @@ function combinedef(dict::Dict)
     # We need the `if` to handle parametric inner/outer constructors like
     # SomeType{X}(x::X) where X = SomeType{X}(x, x+2)
     if isempty(wparams)
-      if rtype==nothing
+      if rtype === nothing
         @q(function $name_param($(dict[:args]...);
                                 $(dict[:kwargs]...))
           $(body.args...)
@@ -478,7 +479,7 @@ function combinedef(dict::Dict)
           end)
       end
     else
-      if rtype==nothing
+      if rtype === nothing
         @q(function $name_param($(dict[:args]...);
                                 $(dict[:kwargs]...)) where {$(wparams...)}
           $(body.args...)
@@ -497,13 +498,13 @@ function combinedef(dict::Dict)
       arg = Expr(:tuple, Expr(:parameters, dict[:kwargs]...), dict[:args]...)
     end
     if isempty(wparams)
-      if rtype==nothing
+      if rtype === nothing
         @q($arg -> $body)
       else
         @q(($arg::$rtype) -> $body)
       end
     else
-      if rtype==nothing
+      if rtype === nothing
         @q(($arg where {$(wparams...)}) -> $body)
       else
         @q(($arg::$rtype where {$(wparams...)}) -> $body)
@@ -520,7 +521,7 @@ end
 function combinearg(arg_name, arg_type, is_splat, default)
     @assert arg_name !== nothing || arg_type !== nothing
     a = arg_name===nothing ? :(::$arg_type) :
-        arg_type==:Any && is_splat ? arg_name :   # see #177 and julia#43625
+        arg_type === :Any && is_splat ? arg_name :   # see #177 and julia#43625
             :($arg_name::$arg_type)
     a2 = is_splat ? Expr(:..., a) : a
     return default === nothing ? a2 : Expr(:kw, a2, default)
@@ -598,6 +599,10 @@ function flatten(x::Expr)
     # args[3] can be a block (or false if there is no catch, which requires an else or finally)
     # args[4] can be a block (or false if there is no finally but there is an else) if it exists
     # args[5] can only be a block if it exists
+  elseif isexpr(x, :do) && length(x.args) == 2 && isexpr(x.args[2], :->) # the body of a `do` must stay a block (Base's printer relies on it). See #84
+    return Expr(:do, flatten(x.args[1]), Expr(:->, map(bflatten, x.args[2].args)...))
+  elseif isexpr(x, :struct, :module, :macro) # their bodies must stay blocks too, or `eval` rejects them
+    return Expr(x.head, map(bflatten, x.args)...)
   else
     return flatten1(Expr(x.head, map(flatten, x.args)...))
   end
