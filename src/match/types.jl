@@ -5,7 +5,8 @@ end
 
 istb(s) = false
 istb(s::Symbol) = !(endswith(string(s), "_") ||
-                    endswith(string(s), "_str")) &&
+                    endswith(string(s), "_str") ||
+                    startswith(string(s), "@")) && # macro names, e.g. `@code_warntype` (#192)
                     occursin("_", string(s))
 
 tbname(s::Symbol) = Symbol(split(string(s), "_")[1])
